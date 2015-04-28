@@ -5,11 +5,13 @@ import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.provider.Browser;
 import android.util.Log;
 import android.widget.Toast;
@@ -26,6 +28,9 @@ public class BlockService extends Service {
     private BroadcastReceiver mReceiver;
     Timer timer;
     boolean screenOff;
+    public static final String APP_PREFERENCES = "WhiteList";
+
+    SharedPreferences mSettings;
 
     @Override
     public void onCreate() {
@@ -34,11 +39,15 @@ public class BlockService extends Service {
         filter.addAction(Intent.ACTION_SCREEN_OFF);
         mReceiver = new ScreenReceiver();
         registerReceiver(mReceiver, filter);
+        SharedPreferences mySharedPreferences = getSharedPreferences(APP_PREFERENCES, getApplicationContext().MODE_PRIVATE);
+        mSettings = getSharedPreferences(APP_PREFERENCES, getApplicationContext().MODE_PRIVATE);
     }
 
     @Override
     public void onStart(Intent intent, int startId) {
         super.onStart(intent, startId);
+
+
         try {
             screenOff = intent.getBooleanExtra("screen_state", false);
         } catch (Exception e) {
@@ -55,21 +64,28 @@ public class BlockService extends Service {
                     for (int i = 0; i != processInfos.size(); i++) {
                         ActivityManager.RunningAppProcessInfo info = processInfos.get(i);
                         if (processInfos.get(i).processName.equals("com.android.chrome") ||
-                                processInfos.get(i).processName.equals("com.android.browser") ||
-                                processInfos.get(i).processName.equals("org.mozilla.firefox")) {
+                                processInfos.get(i).processName.equals("com.android.browser")||
+                                processInfos.get(i).processName.equals("org.mozilla.firefox")||
+                                processInfos.get(i).processName.equals("mobi.mgeek.TunnyBrowse")||
+                                processInfos.get(i).processName.contains("com.opera.browser")) {
                             ActivityManager.RunningTaskInfo foregrountTaskInfo = activityManager.getRunningTasks(1).get(0);
                             String foregroundTaskPackageName = foregrountTaskInfo.topActivity.getPackageName();
                             //if user have opened default browser or chrome - we take url
                             if (foregroundTaskPackageName.equals(processInfos.get(i).processName)) {
                                 if (foregroundTaskPackageName.equals("com.android.chrome") ||
                                         foregroundTaskPackageName.equals("com.android.browser")) {
-                                    getUrl(processInfos.get(i).processName);
-                                    //open new tab in chrome
-                                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://yahoo.com"));
-                                    intent.setPackage("com.android.chrome");
-                                    intent.putExtra(Browser.EXTRA_CREATE_NEW_TAB, "com.android.chrome");
-                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    startActivity(intent);
+                                    //check the white list
+                                   if(mSettings.contains(getUrl(processInfos.get(i).processName))) {
+                                       //change on ! later
+                                       Log.d("congratulation, site in white list", getUrl(processInfos.get(i).processName));
+                                   }else {
+                                       //open new tab in chrome
+                                       Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://yahoo.com"));
+                                       intent.setPackage("com.android.chrome");
+                                       intent.putExtra(Browser.EXTRA_CREATE_NEW_TAB, "com.android.chrome");
+                                       intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                       startActivity(intent);
+                                   }
                                 } else {
                                     // if user have opened other browser - go to launcher
                                     startActivity(new Intent("android.intent.action.MAIN")
@@ -120,7 +136,7 @@ public class BlockService extends Service {
         mCur.moveToFirst();
         mCur.moveToLast();
         url = mCur.getString(mCur.getColumnIndex(Browser.BookmarkColumns.URL));
-        Log.i("Internet URL = ", url);
+        Log.i("URL = ", url);
         return url;
     }
 

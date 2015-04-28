@@ -16,5 +16,6 @@ public class BootCompletedReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent arg1) {
         Log.w(TAG, "starting service...");
         context.startService(new Intent(context, BlockService.class));
+        context.startService(new Intent(context, WhiteListCreatorService.class));
     }
 }
