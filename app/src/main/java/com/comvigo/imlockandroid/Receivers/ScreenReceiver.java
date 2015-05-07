@@ -1,9 +1,11 @@
-package com.comvigo.imlockandroid;
+package com.comvigo.imlockandroid.Receivers;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
+
+import com.comvigo.imlockandroid.Services.BlockService;
 
 /**
  * Created by Dmitry on 27.04.2015.

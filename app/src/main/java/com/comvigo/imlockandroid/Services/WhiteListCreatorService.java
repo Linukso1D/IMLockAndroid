@@ -1,4 +1,4 @@
-package com.comvigo.imlockandroid;
+package com.comvigo.imlockandroid.Services;
 
 import android.app.Service;
 import android.content.Intent;
