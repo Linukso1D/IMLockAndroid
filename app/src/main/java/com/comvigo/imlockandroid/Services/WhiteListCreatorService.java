@@ -5,9 +5,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.util.Log;
 
 /**
- * Created by Влад on 28.04.2015.
+ * Created by Dmitry on 28.04.2015.
  */
 public class WhiteListCreatorService extends Service {
 

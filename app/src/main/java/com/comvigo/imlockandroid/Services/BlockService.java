@@ -16,11 +16,13 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.provider.Browser;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.comvigo.imlockandroid.Receivers.InternetReceiver;
 import com.comvigo.imlockandroid.Receivers.ScreenReceiver;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -38,12 +40,14 @@ public class BlockService extends Service {
     private static final String APP_PREFERENCES = "WhiteList";
     boolean hasInternet = false;
     SharedPreferences mSettings;
-    private Object lock = new Object();
+    List<String> browsers;
 
     @Override
     public void onCreate() {
         super.onCreate();
         //create screen receiver
+        browsers = Arrays.asList("com.android.chrome", "com.android.browser",
+                "org.mozilla.firefox", "mobi.mgeek.TunnyBrowser", "com.opera.browser:main");
         IntentFilter screenFilter = new IntentFilter(Intent.ACTION_SCREEN_ON);
         screenFilter.addAction(Intent.ACTION_SCREEN_OFF);
         mScreenReceiver = new ScreenReceiver();
@@ -86,29 +90,15 @@ public class BlockService extends Service {
                         ActivityManager.RunningAppProcessInfo info = processInfos.get(i);
                         ActivityManager.RunningTaskInfo foregrountTaskInfo = activityManager.getRunningTasks(1).get(0);
                         String foregroundTaskPackageName = foregrountTaskInfo.topActivity.getPackageName();
-                        //bat practice, but only way to close opera
-                        if (processInfos.get(i).processName.contains("com.opera.browser")) {
-                            if (foregroundTaskPackageName.equals("com.opera.browser")) {
-                                startActivity(new Intent("android.intent.action.MAIN")
-                                        .addCategory("android.intent.category.HOME")
-                                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-                                activityManager.killBackgroundProcesses(info.processName);
-                                Message msg = handler.obtainMessage();
-                                msg.arg1 = 1;
-                                handler.sendMessage(msg);
-                            }
-                        }
-                        if (processInfos.get(i).processName.equals("com.android.chrome") ||
-                                processInfos.get(i).processName.equals("com.android.browser") ||
-                                processInfos.get(i).processName.equals("org.mozilla.firefox") ||
-                                processInfos.get(i).processName.equals("mobi.mgeek.TunnyBrowser") ||
-                                processInfos.get(i).processName.contains("com.opera.browser:main")) {
+                        if (browsers.contains(processInfos.get(i).processName)) {
                             //if user have opened default browser or chrome - we take url
-                            if (foregroundTaskPackageName.equals(processInfos.get(i).processName)) {
+                            if (foregroundTaskPackageName.equals(processInfos.get(i).processName) ||
+                                    foregroundTaskPackageName.equals("com.opera.browser")) {
                                 if (foregroundTaskPackageName.equals("com.android.chrome") ||
                                         foregroundTaskPackageName.equals("com.android.browser")) {
                                     //check the white list
                                     String openedUrl = getUrl(processInfos.get(i).processName);
+                                    Log.d("URL", openedUrl);
                                     if (!comparator(openedUrl)) {
                                         //get default browser
                                         Intent browserIntent = new Intent("android.intent.action.VIEW", Uri.parse("http://"));
@@ -117,9 +107,9 @@ public class BlockService extends Service {
                                         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://yahoo.com"));
                                         //open new tab on default browser
                                         if (defaultBrowser.equals("com.android.chrome") || defaultBrowser.equals("com.android.browser")) {
-                                            intent.setPackage(defaultBrowser);
+                                            intent.setPackage("com.android.chrome");
                                         } else {
-                                            intent.setPackage("com.android.browser");
+                                            intent.setPackage("com.android.chrome");
                                         }
                                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                         startActivity(intent);
@@ -156,9 +146,6 @@ public class BlockService extends Service {
 
     /**
      * Get last url from browser bookmark history
-     *
-     * @param browser
-     * @return
      */
     private String getUrl(String browser) {
         String[] proj = new String[]{Browser.BookmarkColumns.TITLE, Browser.BookmarkColumns.URL};
@@ -169,19 +156,24 @@ public class BlockService extends Service {
         if (browser.equals("com.android.chrome")) {
             mCur = getContentResolver().query(uriCustom, proj, sel, null, Browser.BookmarkColumns.DATE + " ASC");
         } else {
+
             mCur = getContentResolver().query(Browser.BOOKMARKS_URI, proj, sel, null, null);
+            mCur.moveToFirst();
+            while (mCur.isAfterLast() == false) {
+                url = mCur.getString(mCur.getColumnIndex(Browser.BookmarkColumns.URL));
+                Log.d("!!!", url);
+                mCur.moveToNext();
+            }
         }
         mCur.moveToFirst();
         mCur.moveToLast();
         url = mCur.getString(mCur.getColumnIndex(Browser.BookmarkColumns.URL));
+        mCur.close();
         return url;
     }
 
     /**
      * Check if url's domain name in white list
-     *
-     * @param url
-     * @return
      */
     private boolean comparator(String url) {
         Map map = mSettings.getAll();
@@ -191,12 +183,13 @@ public class BlockService extends Service {
             value = key.toString().replaceAll("https://", "");
             value = value.toString().replaceAll("www.", "");
             if (url.contains(value.toString())) {
+                Log.d("COMPARATOR_URL", url);
+                Log.d("CONTAIN", String.valueOf(value));
                 return true;
             }
         }
         return false;
     }
-
 
     @Override
     public IBinder onBind(Intent intent) {
