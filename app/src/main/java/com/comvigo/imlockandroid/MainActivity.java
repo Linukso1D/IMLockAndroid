@@ -1,7 +1,11 @@
 package com.comvigo.imlockandroid;
 
+import android.app.Dialog;
+import android.app.ProgressDialog;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -23,7 +27,6 @@ import org.ksoap2.transport.HttpTransportSE;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Objects;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -33,16 +36,12 @@ public class MainActivity extends ActionBarActivity {
 
     Button send;
     EditText login, password;
-
-    protected boolean auth = false;
+    final int PROGRESS_DLG_ID = 666;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        startService(new Intent(this, BlockService.class));
-        startService(new Intent(this, WhiteListCreatorService.class));
-
         login = (EditText) findViewById(R.id.login);
         password = (EditText) findViewById(R.id.password);
         send = (Button) findViewById(R.id.send);
@@ -50,11 +49,6 @@ public class MainActivity extends ActionBarActivity {
             public void onClick(View v) {
                 AsyncCallWS task = new AsyncCallWS();
                 task.execute(login.getText().toString(), password.getText().toString());
-                Log.d("AUTH", String.valueOf(auth));
-                if(auth){
-                    GetUser getUser = new GetUser();
-                    getUser.execute();
-                }
             }
         });
     }
@@ -79,7 +73,7 @@ public class MainActivity extends ActionBarActivity {
         return serverResult;
     }
 
-    public void getUser(){
+    public void getUser(String login){
         String serverResult = "0";
         SoapObject request = new SoapObject(NAMESPACE, "GetUser");
         TelephonyManager telephonyManager = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
@@ -88,9 +82,8 @@ public class MainActivity extends ActionBarActivity {
         Calendar c = Calendar.getInstance();
         SimpleDateFormat df = new SimpleDateFormat("ddMMMyyyy");
         String formattedDate = df.format(c.getTime());
-        Log.d("IMEI", formattedDate + model.replaceAll(" ", "") + imei);
         String comuterID=formattedDate+model.replaceAll(" ","")+imei;
-        request.addProperty("username", "dmitry_leonov@mail.ua");
+        request.addProperty("username", login);
         request.addProperty("computerID", comuterID);
         request.addProperty("token", "imlu$$$$");
         SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
@@ -107,36 +100,63 @@ public class MainActivity extends ActionBarActivity {
         Log.d("getUser",serverResult);
     }
 
+
+    @Override
+    protected Dialog onCreateDialog(int dialogId){
+        ProgressDialog progress = null;
+        switch (dialogId) {
+            case PROGRESS_DLG_ID:
+                progress = new ProgressDialog(this);
+                progress.setMessage("Loading...");
+
+                break;
+        }
+        return progress;
+    }
+
     private class AsyncCallWS extends AsyncTask<String, String, String> {
 
         @Override
         protected String doInBackground(String... params) {
+            publishProgress(new String[]{});
             String result = validateUser(params[0], params[1]);
             return result;
         }
 
         @Override
+        protected void onProgressUpdate(String... values) {
+            super.onProgressUpdate(values);
+            showDialog(PROGRESS_DLG_ID);
+        }
+
+        @Override
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
+            dismissDialog(PROGRESS_DLG_ID);
             switch (result){
                 case "-1": Toast.makeText(getApplication(), "Wrong login or password" , Toast.LENGTH_LONG).show();
-                    auth =false;
                     break;
                 case "0": Toast.makeText(getApplication(), "Server connection error" , Toast.LENGTH_LONG).show();
-                    auth =false;
                     break;
-                case "1": Toast.makeText(getApplication(), "Success" , Toast.LENGTH_LONG).show();
-                    auth = true;
+                case "1":
+                    GetUser getUser = new GetUser();
+                    getUser.execute(login.getText().toString());
+                    startService(new Intent(getApplicationContext(), BlockService.class));
+                    startService(new Intent(getApplicationContext(), WhiteListCreatorService.class));
+                    PackageManager p = getPackageManager();
+                    ComponentName componentName = new ComponentName(getApplication(), com.comvigo.imlockandroid.MainActivity.class);
+                    p.setComponentEnabledSetting(componentName, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+                    finish();
                     break;
             }
         }
     }
 
-    private class GetUser extends AsyncTask<Void, Void, Void> {
+    private class GetUser extends AsyncTask<String, Void, Void> {
 
         @Override
-        protected Void doInBackground(Void... params) {
-            getUser();
+        protected Void doInBackground(String... params) {
+            getUser(params[0]);
             return null;
         }
 
