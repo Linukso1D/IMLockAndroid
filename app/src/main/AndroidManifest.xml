@@ -35,7 +35,13 @@
         <service
             android:name=".Services.BlockService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="com.comvigo.imlockandroid.Services.WhiteListCreatorService"/>
+            </intent-filter>
+
+        </service>
 
         <service
             android:name=".Services.WhiteListCreatorService"

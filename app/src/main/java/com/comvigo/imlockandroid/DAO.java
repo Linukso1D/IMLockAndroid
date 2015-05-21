@@ -8,6 +8,7 @@ import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+
 import com.google.common.io.BaseEncoding;
 
 import org.ksoap2.SoapEnvelope;
@@ -21,12 +22,19 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -41,25 +49,37 @@ public class DAO extends ActionBarActivity {
     private final String NAMESPACE = "http://tempuri.org/";
     private final String LOGIN = "http://imlockusers.blockinternet.net/Service1.svc?wsdl";
     private final String SETTINGS = "http://webservice.blockinternet.net/Service1.svc?wsdl";
-    final int PROGRESS_DLG_ID = 666;
+//    final int PROGRESS_DLG_ID = 666;
 
-    public String validateUser(String login, String pass){
+    public String validateUser(String login, String pass) {
         String str = "";
         try {
             str = new ValidateUser().execute(login, pass).get();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Log.d("str",str);
+        Log.d("str", str);
         return str;
     }
 
-    public void getUser(String login) {
+    public String getUser(String login, String comuterID) {
+        String userID = "";
         try {
-            new GetUser().execute(login).get();
+            userID = String.valueOf(new GetUser().execute(login, comuterID).get());
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return userID;
+    }
+
+    public String makeforThisComputer(String comuterID) {
+        String userID = "";
+        try {
+            userID = String.valueOf(new MakeforThisComputer().execute(comuterID).get());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return userID;
     }
 
     public void getSettingsList() {
@@ -70,9 +90,17 @@ public class DAO extends ActionBarActivity {
         }
     }
 
-    public void getSettings() {
+    public void getSettings(String userID, String settingsID) {
         try {
-            new GetSettings().execute().get();
+           new GetSettings().execute(userID, settingsID);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void getDefaultSettingsForUser(String computerID) {
+        try {
+            new GetDefaultSettingsForUser().execute(computerID);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -134,20 +162,13 @@ public class DAO extends ActionBarActivity {
     /**
      * GetUser
      */
-    private class GetUser extends AsyncTask<String, Void, Void> {
+    private class GetUser extends AsyncTask<String, String, String> {
         @Override
-        protected Void doInBackground(String... params) {
+        protected String doInBackground(String... params) {
             String serverResult = "0";
             SoapObject request = new SoapObject(NAMESPACE, "GetUser");
-            TelephonyManager telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-            String imei = telephonyManager.getDeviceId();
-            String model = android.os.Build.MODEL;
-            Calendar c = Calendar.getInstance();
-            SimpleDateFormat df = new SimpleDateFormat("ddMMMyyyy");
-            String formattedDate = df.format(c.getTime());
-            String comuterID = formattedDate + model.replaceAll(" ", "") + imei;
             request.addProperty("username", params[0]);
-            request.addProperty("computerID", comuterID);
+            request.addProperty("computerID", params[1]);
             request.addProperty("token", "imlu$$$$");
             SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
             envelope.dotNet = true;
@@ -156,12 +177,16 @@ public class DAO extends ActionBarActivity {
             try {
                 transportSE.call("http://tempuri.org/IService1/GetUser", envelope);
                 SoapObject response = (SoapObject) envelope.getResponse();
-                serverResult = response.toString();
+                serverResult = String.valueOf(response.getProperty("userIDField"));
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            Log.d("getUser", serverResult);
-            return null;
+            return serverResult;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
         }
     }
 
@@ -187,19 +212,19 @@ public class DAO extends ActionBarActivity {
                 e.printStackTrace();
             }
             Log.d("!!!", serverResult);
-            return  null;
+            return null;
         }
     }
 
     /**
      * GetSettings
      */
-    private class GetSettings extends AsyncTask<String, String, String> {
+    private class GetSettings extends AsyncTask<String, Void, Void> {
         @Override
-        protected String doInBackground(String... params) {
+        protected Void doInBackground(String... params) {
             SoapObject request = new SoapObject(NAMESPACE, "GetSettings");
-            request.addProperty("UserID", "101678");
-            request.addProperty("SettingID", "6333");
+            request.addProperty("UserID", params[0]);
+            request.addProperty("SettingID", params[1]);
             request.addProperty("token", "Anonymous~XML!for@lock#IM!!");
             SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
             envelope.dotNet = true;
@@ -212,31 +237,10 @@ public class DAO extends ActionBarActivity {
                 byte[] decodedPhraseAsBytes = BaseEncoding.base64().decode(
                         String.valueOf(response.getProperty("lockData")));
                 writeXML(decodedPhraseAsBytes);
-                parseXML();
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            return "FUCK";
-        }
-
-        private void parseXML() {
-            try {
-                DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-                dbf.setValidating(false);
-                DocumentBuilder db = dbf.newDocumentBuilder();
-                Document doc = db.parse(new FileInputStream(
-                        new File(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "fuck1.xml")));
-                NodeList entries = doc.getElementsByTagName("WhiteList");
-                Element node1 = (Element) entries.item(0);
-                NodeList name = node1.getElementsByTagName("Site");
-                int num = name.getLength();
-                for (int i = 0; i < num; i++) {
-                    Element node = (Element) name.item(i);
-                    listAllAttributes(node);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            return null;
         }
 
         private void writeXML(byte[] decodedPhraseAsBytes) {
@@ -249,7 +253,7 @@ public class DAO extends ActionBarActivity {
                     String fileName = new String(ze.getName().getBytes("UTF-8"));
                     Log.d("filename", fileName);
                     File newFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
-                            + File.separator + fileName+".txt");
+                            + File.separator + "IMLockData.txt");
                     System.out.println("file unzip : " + newFile.getAbsoluteFile());
                     new File(newFile.getParent()).mkdirs();
                     FileOutputStream fos = new FileOutputStream(newFile);
@@ -264,19 +268,60 @@ public class DAO extends ActionBarActivity {
                 e.printStackTrace();
             }
         }
+    }
 
-        private void listAllAttributes(Element element) {
-            System.out.println("List attributes for node: " + element.getNodeName());
-            NamedNodeMap attributes = element.getAttributes();
-            NodeList name = element.getElementsByTagName("description");
-            int numAttrs = attributes.getLength();
-            for (int i = 0; i < numAttrs; i++) {
-                Attr attr = (Attr) attributes.item(i);
-                String attrName = attr.getNodeName();
-                String attrValue = attr.getNodeValue();
-                String attrContent = attr.getValue();
-                System.out.println("Found attribute: " + attrName + " with value: " + attrValue + " and content: " + name.item(0).getFirstChild().getTextContent());
+    /**
+     * MakeforThisComputer
+     */
+    private class MakeforThisComputer extends AsyncTask<String, Void, Void> {
+        @Override
+        protected Void doInBackground(String... params) {
+            String serverResult = "0";
+            SoapObject request = new SoapObject(NAMESPACE, "MakeforThisComputer");
+            request.addProperty("settingid", "6333");
+            request.addProperty("userid", "101678");
+            request.addProperty("computerid", params[0]);
+            request.addProperty("token", "Anonymous~XML!for@lock#IM!!");
+            SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
+            envelope.dotNet = true;
+            envelope.setOutputSoapObject(request);
+            HttpTransportSE transportSE = new HttpTransportSE(SETTINGS);
+            try {
+                transportSE.call("http://tempuri.org/IService1/MakeforThisComputer", envelope);
+                SoapPrimitive response = (SoapPrimitive) envelope.getResponse();
+                serverResult = response.toString();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
+            Log.d("!!!", serverResult);
+            return null;
+        }
+    }
+
+    /**
+     * GetDefaultSettingsForUser
+     */
+    private class GetDefaultSettingsForUser extends AsyncTask<String, Void, Void> {
+        @Override
+        protected Void doInBackground(String... params) {
+            String serverResult = "0";
+            SoapObject request = new SoapObject(NAMESPACE, "GetDefaultSettingsForUser");
+            request.addProperty("userid", "101678");
+            request.addProperty("computerid", params[0]);
+            request.addProperty("token", "Anonymous~XML!for@lock#IM!!");
+            SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
+            envelope.dotNet = true;
+            envelope.setOutputSoapObject(request);
+            HttpTransportSE transportSE = new HttpTransportSE(SETTINGS);
+            try {
+                transportSE.call("http://tempuri.org/IService1/GetDefaultSettingsForUser", envelope);
+                SoapObject response = (SoapObject) envelope.getResponse();
+                serverResult = response.toString();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            Log.d("!!!", serverResult);
+            return null;
         }
     }
 

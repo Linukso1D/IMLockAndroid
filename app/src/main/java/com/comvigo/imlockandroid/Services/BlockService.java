@@ -182,6 +182,7 @@ public class BlockService extends Service {
             value = key.toString().replaceAll("http://", "");
             value = key.toString().replaceAll("https://", "");
             value = value.toString().replaceAll("www.", "");
+            Log.d("!!", String.valueOf(key));
             if (url.contains(value.toString())) {
                 Log.d("COMPARATOR_URL", url);
                 Log.d("CONTAIN", String.valueOf(value));
@@ -189,6 +190,13 @@ public class BlockService extends Service {
             }
         }
         return false;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(mScreenReceiver);
+        unregisterReceiver(mInternetReceiver);
     }
 
     @Override
