@@ -16,7 +16,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.provider.Browser;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.comvigo.imlockandroid.Receivers.InternetReceiver;
@@ -37,9 +36,11 @@ public class BlockService extends Service {
     private BroadcastReceiver mInternetReceiver;
     private Timer timer;
     boolean screenOff;
-    private static final String APP_PREFERENCES = "WhiteList";
+    public static final String APP_PREFERENCES_WHITE = "WhiteList";
+    public static final String APP_PREFERENCES_BLACK = "BlackList";
+    public static final String APP_PREFERENCES_SETTINGS = "Settings";
     boolean hasInternet = false;
-    SharedPreferences mSettings;
+    SharedPreferences mSettingsBlack, mSettingsWhite ,mSettings;
     List<String> browsers;
 
     @Override
@@ -57,8 +58,8 @@ public class BlockService extends Service {
         mInternetReceiver = new InternetReceiver();
         registerReceiver(mInternetReceiver, internetFilter);
         //read shared preferences
-        SharedPreferences mySharedPreferences = getSharedPreferences(APP_PREFERENCES, getApplicationContext().MODE_PRIVATE);
-        mSettings = getSharedPreferences(APP_PREFERENCES, getApplicationContext().MODE_PRIVATE);
+        SharedPreferences mySharedPreferences = getSharedPreferences(APP_PREFERENCES_WHITE, getApplicationContext().MODE_PRIVATE);
+        mSettings = getSharedPreferences(APP_PREFERENCES_WHITE, getApplicationContext().MODE_PRIVATE);
         //first check internet connection
         ConnectivityManager CManager =
                 (ConnectivityManager) getSystemService(getApplicationContext().CONNECTIVITY_SERVICE);
@@ -98,16 +99,15 @@ public class BlockService extends Service {
                                         foregroundTaskPackageName.equals("com.android.browser")) {
                                     //check the white list
                                     String openedUrl = getUrl(processInfos.get(i).processName);
-                                    Log.d("URL", openedUrl);
                                     if (!comparator(openedUrl)) {
                                         //get default browser
                                         Intent browserIntent = new Intent("android.intent.action.VIEW", Uri.parse("http://"));
                                         ResolveInfo resolveInfo = getPackageManager().resolveActivity(browserIntent, PackageManager.MATCH_DEFAULT_ONLY);
                                         String defaultBrowser = resolveInfo.activityInfo.packageName;
-                                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://yahoo.com"));
+                                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://comvigo.com"));
                                         //open new tab on default browser
                                         if (defaultBrowser.equals("com.android.chrome") || defaultBrowser.equals("com.android.browser")) {
-                                            intent.setPackage("com.android.chrome");
+                                            intent.setPackage(defaultBrowser);
                                         } else {
                                             intent.setPackage("com.android.chrome");
                                         }
@@ -131,7 +131,7 @@ public class BlockService extends Service {
                     }
                 }
             };
-            timer.schedule(timerTask, 2000, 10000);
+            timer.schedule(timerTask, 3000, 15000);
         } else {
             timer.cancel();
         }
@@ -161,7 +161,6 @@ public class BlockService extends Service {
             mCur.moveToFirst();
             while (mCur.isAfterLast() == false) {
                 url = mCur.getString(mCur.getColumnIndex(Browser.BookmarkColumns.URL));
-                Log.d("!!!", url);
                 mCur.moveToNext();
             }
         }
@@ -179,13 +178,10 @@ public class BlockService extends Service {
         Map map = mSettings.getAll();
         for (Object key : map.keySet()) {
             Object value;
-            value = key.toString().replaceAll("http://", "");
             value = key.toString().replaceAll("https://", "");
+            value = key.toString().replaceAll("http://", "");
             value = value.toString().replaceAll("www.", "");
-            Log.d("!!", String.valueOf(key));
             if (url.contains(value.toString())) {
-                Log.d("COMPARATOR_URL", url);
-                Log.d("CONTAIN", String.valueOf(value));
                 return true;
             }
         }

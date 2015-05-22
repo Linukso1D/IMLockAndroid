@@ -243,31 +243,12 @@ public class DAO extends ActionBarActivity {
             return null;
         }
 
-        private void writeXML(byte[] decodedPhraseAsBytes) {
-            byte[] buffer = new byte[1024];
-            try {
-                ZipInputStream zis = new ZipInputStream(
-                        new ByteArrayInputStream(decodedPhraseAsBytes));
-                ZipEntry ze = zis.getNextEntry();
-                while (ze != null) {
-                    String fileName = new String(ze.getName().getBytes("UTF-8"));
-                    Log.d("filename", fileName);
-                    File newFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
-                            + File.separator + "IMLockData.txt");
-                    System.out.println("file unzip : " + newFile.getAbsoluteFile());
-                    new File(newFile.getParent()).mkdirs();
-                    FileOutputStream fos = new FileOutputStream(newFile);
-                    int len;
-                    while ((len = zis.read(buffer)) > 0) {
-                        fos.write(buffer, 0, len);
-                    }
-                    fos.close();
-                    ze = zis.getNextEntry();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            getXML();
         }
+
     }
 
     /**
@@ -301,9 +282,10 @@ public class DAO extends ActionBarActivity {
     /**
      * GetDefaultSettingsForUser
      */
-    private class GetDefaultSettingsForUser extends AsyncTask<String, Void, Void> {
+    private class GetDefaultSettingsForUser extends AsyncTask<String, byte[], byte[]> {
         @Override
-        protected Void doInBackground(String... params) {
+        protected byte[] doInBackground(String... params) {
+            byte[] decodedPhraseAsBytes = null;
             String serverResult = "0";
             SoapObject request = new SoapObject(NAMESPACE, "GetDefaultSettingsForUser");
             request.addProperty("userid", "101678");
@@ -317,11 +299,62 @@ public class DAO extends ActionBarActivity {
                 transportSE.call("http://tempuri.org/IService1/GetDefaultSettingsForUser", envelope);
                 SoapObject response = (SoapObject) envelope.getResponse();
                 serverResult = response.toString();
+                decodedPhraseAsBytes = BaseEncoding.base64().decode(
+                        String.valueOf(response.getProperty("lockData")));
+                writeXML(decodedPhraseAsBytes);
             } catch (Exception e) {
                 e.printStackTrace();
             }
             Log.d("!!!", serverResult);
-            return null;
+            return decodedPhraseAsBytes;
+        }
+    }
+
+    private void writeXML(byte[] decodedPhraseAsBytes) {
+        byte[] buffer = new byte[1024];
+        try {
+            ZipInputStream zis = new ZipInputStream(
+                    new ByteArrayInputStream(decodedPhraseAsBytes));
+            ZipEntry ze = zis.getNextEntry();
+            while (ze != null) {
+                String fileName = new String(ze.getName().getBytes("UTF-8"));
+                Log.d("filename", fileName);
+                File newFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
+                        + File.separator + "IMLockData.txt");
+                System.out.println("file unzip : " + newFile.getAbsoluteFile());
+                new File(newFile.getParent()).mkdirs();
+                FileOutputStream fos = new FileOutputStream(newFile);
+                int len;
+                while ((len = zis.read(buffer)) > 0) {
+                    fos.write(buffer, 0, len);
+                }
+                fos.close();
+                ze = zis.getNextEntry();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void getXML() {
+        String sCurrentLine;
+        String res = "";
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(
+                    Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "IMLockData.txt"));
+            while ((sCurrentLine = br.readLine()) != null) {
+                res += sCurrentLine;
+            }
+            res.replace("utf-16","utf-8");
+            File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath() +
+                    File.separator + "IMLockData.txt");
+            FileOutputStream fop = new FileOutputStream(file);
+            byte[] contentInBytes = res.getBytes();
+            fop.write(contentInBytes);
+            fop.flush();
+            fop.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

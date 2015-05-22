@@ -62,10 +62,10 @@ public class MainActivity extends ActionBarActivity {
                         intent.putExtra("comuterID", comuterID);
                         startService(intent);
                         PackageManager p = getPackageManager();
-                        ComponentName componentName = new ComponentName(getApplication(),
-                                com.comvigo.imlockandroid.MainActivity.class);
-                        p.setComponentEnabledSetting(componentName,
-                                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+//                        ComponentName componentName = new ComponentName(getApplication(),
+//                                com.comvigo.imlockandroid.MainActivity.class);
+//                        p.setComponentEnabledSetting(componentName,
+//                                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
                         finish();
                         break;
                 }

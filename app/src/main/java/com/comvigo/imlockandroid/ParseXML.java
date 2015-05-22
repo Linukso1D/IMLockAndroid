@@ -11,6 +11,8 @@ import org.xml.sax.InputSource;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -27,6 +29,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 public class ParseXML {
 
     public List<String> getBlockList() {
+        getXML();
         return parseXML("black");
     }
 
@@ -38,30 +41,40 @@ public class ParseXML {
         return parseXML("other");
     }
 
-    private String getXML() {
+    public void getXML(){
         String sCurrentLine;
         String res = "";
         try {
-            BufferedReader br = new BufferedReader(new FileReader(Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "IMLockData.txt"));
+            BufferedReader br = new BufferedReader(new FileReader(
+                    Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "IMLockData.txt"));
             while ((sCurrentLine = br.readLine()) != null) {
                 res += sCurrentLine;
             }
+            Log.d("GGGG1", res);
+            String utf8 = res.replace("utf-16", "utf-8");
+            Log.d("GGGG2", utf8);
+            File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath() +
+                    File.separator + "IMLockData.txt");
+            FileOutputStream fop = new FileOutputStream(file);
+            byte[] contentInBytes = utf8.getBytes();
+            fop.write(contentInBytes);
+            fop.flush();
+            fop.close();
         } catch (Exception e) {
             e.printStackTrace();
+            Log.d("FUCK", e.toString());
         }
-        return res;
     }
 
     private List<String> parseXML(String command) {
-        String xmlString = getXML();
+
         List<String> list = new ArrayList<>();
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             dbf.setValidating(false);
             DocumentBuilder db = dbf.newDocumentBuilder();
-            byte[] bytes = Charset.forName("UTF-16LE").encode(xmlString).array();
-            InputStream inputStream = new ByteArrayInputStream(bytes);
-            Document doc = db.parse(inputStream);
+            Document doc = db.parse(new FileInputStream(Environment.getExternalStorageDirectory().getAbsolutePath() +
+                    File.separator + "IMLockData.txt"));
             switch (command) {
                 case "black":
                     list = getBlock(doc);
@@ -75,9 +88,6 @@ public class ParseXML {
             }
         } catch (Exception e) {
             e.printStackTrace();
-        }
-        for (int i =0; i<list.size(); i++){
-            Log.d("!!", list.get(i));
         }
         return list;
     }
@@ -100,6 +110,9 @@ public class ParseXML {
                 blockList.add(keyword);
             }
         }
+        for (int i = 0; i < blockList.size(); i++) {
+            Log.d("---", blockList.get(i));
+        }
         return blockList;
     }
 
@@ -114,6 +127,9 @@ public class ParseXML {
             NodeList description = node.getElementsByTagName("description");
             String keyword = description.item(0).getFirstChild().getTextContent();
             whiteList.add(keyword);
+        }
+        for (int i = 0; i < whiteList.size(); i++) {
+            Log.d("+++", whiteList.get(i));
         }
         return whiteList;
     }
