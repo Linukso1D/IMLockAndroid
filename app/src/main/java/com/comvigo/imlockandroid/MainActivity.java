@@ -4,10 +4,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -55,17 +54,16 @@ public class MainActivity extends ActionBarActivity {
                         String formattedDate = df.format(c.getTime());
                         String comuterID = formattedDate + model.replaceAll(" ", "") + imei;
                         String userID = dao.getUser(login_value, comuterID);
-                        Log.d("userID", userID);
                         startService(new Intent(getApplicationContext(), BlockService.class));
                         Intent intent = new Intent(getApplicationContext(), WhiteListCreatorService.class);
                         intent.putExtra("userID", userID);
                         intent.putExtra("comuterID", comuterID);
                         startService(intent);
                         PackageManager p = getPackageManager();
-//                        ComponentName componentName = new ComponentName(getApplication(),
-//                                com.comvigo.imlockandroid.MainActivity.class);
-//                        p.setComponentEnabledSetting(componentName,
-//                                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+                        ComponentName componentName = new ComponentName(getApplication(),
+                                com.comvigo.imlockandroid.MainActivity.class);
+                        p.setComponentEnabledSetting(componentName,
+                                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
                         finish();
                         break;
                 }

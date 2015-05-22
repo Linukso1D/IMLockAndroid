@@ -58,8 +58,12 @@ public class BlockService extends Service {
         mInternetReceiver = new InternetReceiver();
         registerReceiver(mInternetReceiver, internetFilter);
         //read shared preferences
-        SharedPreferences mySharedPreferences = getSharedPreferences(APP_PREFERENCES_WHITE, getApplicationContext().MODE_PRIVATE);
-        mSettings = getSharedPreferences(APP_PREFERENCES_WHITE, getApplicationContext().MODE_PRIVATE);
+        SharedPreferences whiteSharedPreferences = getSharedPreferences(APP_PREFERENCES_WHITE, getApplicationContext().MODE_PRIVATE);
+        mSettingsWhite = getSharedPreferences(APP_PREFERENCES_WHITE, getApplicationContext().MODE_PRIVATE);
+        SharedPreferences blackSharedPreferences = getSharedPreferences(APP_PREFERENCES_BLACK, getApplicationContext().MODE_PRIVATE);
+        mSettingsBlack = getSharedPreferences(APP_PREFERENCES_BLACK, getApplicationContext().MODE_PRIVATE);
+        SharedPreferences mySharedPreferences = getSharedPreferences(APP_PREFERENCES_SETTINGS, getApplicationContext().MODE_PRIVATE);
+        mSettings = getSharedPreferences(APP_PREFERENCES_SETTINGS, getApplicationContext().MODE_PRIVATE);
         //first check internet connection
         ConnectivityManager CManager =
                 (ConnectivityManager) getSystemService(getApplicationContext().CONNECTIVITY_SERVICE);
@@ -175,8 +179,9 @@ public class BlockService extends Service {
      * Check if url's domain name in white list
      */
     private boolean comparator(String url) {
-        Map map = mSettings.getAll();
-        for (Object key : map.keySet()) {
+        Map white = mSettingsWhite.getAll();
+        Map black = mSettingsBlack.getAll();
+        for (Object key : white.keySet()) {
             Object value;
             value = key.toString().replaceAll("https://", "");
             value = key.toString().replaceAll("http://", "");
@@ -185,7 +190,19 @@ public class BlockService extends Service {
                 return true;
             }
         }
-        return false;
+        for (Object key : black.keySet()) {
+            Object value;
+            value = key.toString().replaceAll("https://", "");
+            value = key.toString().replaceAll("http://", "");
+            value = value.toString().replaceAll("www.", "");
+            if (url.contains(value.toString())) {
+                return false;
+            }
+        }
+        if (mSettings.getString("blockAllOthers","").equals("true")){
+            return false;
+        }
+        return true;
     }
 
     @Override

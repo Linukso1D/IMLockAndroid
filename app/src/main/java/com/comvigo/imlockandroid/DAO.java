@@ -1,14 +1,8 @@
 package com.comvigo.imlockandroid;
 
-import android.app.Dialog;
-import android.app.ProgressDialog;
-import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
-import android.telephony.TelephonyManager;
-import android.util.Log;
-
 import com.google.common.io.BaseEncoding;
 
 import org.ksoap2.SoapEnvelope;
@@ -16,30 +10,13 @@ import org.ksoap2.serialization.SoapObject;
 import org.ksoap2.serialization.SoapPrimitive;
 import org.ksoap2.serialization.SoapSerializationEnvelope;
 import org.ksoap2.transport.HttpTransportSE;
-import org.w3c.dom.Attr;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.NodeList;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 /**
  * Created by Dmitry on 19.05.2015.
@@ -58,7 +35,6 @@ public class DAO extends ActionBarActivity {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Log.d("str", str);
         return str;
     }
 
@@ -211,7 +187,6 @@ public class DAO extends ActionBarActivity {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            Log.d("!!!", serverResult);
             return null;
         }
     }
@@ -242,13 +217,6 @@ public class DAO extends ActionBarActivity {
             }
             return null;
         }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            getXML();
-        }
-
     }
 
     /**
@@ -274,7 +242,6 @@ public class DAO extends ActionBarActivity {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            Log.d("!!!", serverResult);
             return null;
         }
     }
@@ -282,11 +249,9 @@ public class DAO extends ActionBarActivity {
     /**
      * GetDefaultSettingsForUser
      */
-    private class GetDefaultSettingsForUser extends AsyncTask<String, byte[], byte[]> {
+    private class GetDefaultSettingsForUser extends AsyncTask<String, Void, Void> {
         @Override
-        protected byte[] doInBackground(String... params) {
-            byte[] decodedPhraseAsBytes = null;
-            String serverResult = "0";
+        protected Void doInBackground(String... params) {
             SoapObject request = new SoapObject(NAMESPACE, "GetDefaultSettingsForUser");
             request.addProperty("userid", "101678");
             request.addProperty("computerid", params[0]);
@@ -298,15 +263,13 @@ public class DAO extends ActionBarActivity {
             try {
                 transportSE.call("http://tempuri.org/IService1/GetDefaultSettingsForUser", envelope);
                 SoapObject response = (SoapObject) envelope.getResponse();
-                serverResult = response.toString();
-                decodedPhraseAsBytes = BaseEncoding.base64().decode(
+                byte[] decodedPhraseAsBytes = BaseEncoding.base64().decode(
                         String.valueOf(response.getProperty("lockData")));
                 writeXML(decodedPhraseAsBytes);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            Log.d("!!!", serverResult);
-            return decodedPhraseAsBytes;
+            return null;
         }
     }
 
@@ -317,8 +280,6 @@ public class DAO extends ActionBarActivity {
                     new ByteArrayInputStream(decodedPhraseAsBytes));
             ZipEntry ze = zis.getNextEntry();
             while (ze != null) {
-                String fileName = new String(ze.getName().getBytes("UTF-8"));
-                Log.d("filename", fileName);
                 File newFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
                         + File.separator + "IMLockData.txt");
                 System.out.println("file unzip : " + newFile.getAbsoluteFile());
@@ -331,28 +292,6 @@ public class DAO extends ActionBarActivity {
                 fos.close();
                 ze = zis.getNextEntry();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void getXML() {
-        String sCurrentLine;
-        String res = "";
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(
-                    Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "IMLockData.txt"));
-            while ((sCurrentLine = br.readLine()) != null) {
-                res += sCurrentLine;
-            }
-            res.replace("utf-16","utf-8");
-            File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath() +
-                    File.separator + "IMLockData.txt");
-            FileOutputStream fop = new FileOutputStream(file);
-            byte[] contentInBytes = res.getBytes();
-            fop.write(contentInBytes);
-            fop.flush();
-            fop.close();
         } catch (Exception e) {
             e.printStackTrace();
         }

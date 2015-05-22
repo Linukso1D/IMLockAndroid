@@ -1,22 +1,16 @@
 package com.comvigo.imlockandroid;
 
 import android.os.Environment;
-import android.util.Log;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,9 +44,7 @@ public class ParseXML {
             while ((sCurrentLine = br.readLine()) != null) {
                 res += sCurrentLine;
             }
-            Log.d("GGGG1", res);
             String utf8 = res.replace("utf-16", "utf-8");
-            Log.d("GGGG2", utf8);
             File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath() +
                     File.separator + "IMLockData.txt");
             FileOutputStream fop = new FileOutputStream(file);
@@ -62,7 +54,6 @@ public class ParseXML {
             fop.close();
         } catch (Exception e) {
             e.printStackTrace();
-            Log.d("FUCK", e.toString());
         }
     }
 
@@ -110,9 +101,6 @@ public class ParseXML {
                 blockList.add(keyword);
             }
         }
-        for (int i = 0; i < blockList.size(); i++) {
-            Log.d("---", blockList.get(i));
-        }
         return blockList;
     }
 
@@ -127,9 +115,6 @@ public class ParseXML {
             NodeList description = node.getElementsByTagName("description");
             String keyword = description.item(0).getFirstChild().getTextContent();
             whiteList.add(keyword);
-        }
-        for (int i = 0; i < whiteList.size(); i++) {
-            Log.d("+++", whiteList.get(i));
         }
         return whiteList;
     }

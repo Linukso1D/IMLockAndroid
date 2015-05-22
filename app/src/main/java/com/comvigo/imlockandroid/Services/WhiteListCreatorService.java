@@ -1,18 +1,14 @@
 package com.comvigo.imlockandroid.Services;
 
 import android.app.ActivityManager;
-import android.app.Application;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
-import android.util.Log;
 
 import com.comvigo.imlockandroid.DAO;
 import com.comvigo.imlockandroid.ParseXML;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -55,6 +51,15 @@ public class WhiteListCreatorService extends Service {
         ParseXML parseXML = new ParseXML();
         List<String> block = parseXML.getBlockList();
         List<String> white = parseXML.getWhiteList();
+        try {
+            List<String> other = parseXML.blockAllOthers();
+            editor.putString("blockAllOthers", other.get(0));
+            editor.apply();
+        } catch (Exception e) {
+            List<String> other = parseXML.blockAllOthers();
+            editor.putString("blockAllOthers", other.get(0));
+            editor.apply();
+        }
         //Create blacklist file
         SharedPreferences blackSharedPreferences = getSharedPreferences(APP_PREFERENCES_BLACK, getApplicationContext().MODE_PRIVATE);
         mSettingsBlack = getSharedPreferences(APP_PREFERENCES_BLACK, getApplicationContext().MODE_PRIVATE);
@@ -64,7 +69,6 @@ public class WhiteListCreatorService extends Service {
             editorBlack.putString(block.get(i), APP_PREFERENCES_NAME);
         }
         editorBlack.apply();
-
         //create whitelist file
         SharedPreferences whiteSharedPreferences = getSharedPreferences(APP_PREFERENCES_WHITE, getApplicationContext().MODE_PRIVATE);
         mSettingsWhite = getSharedPreferences(APP_PREFERENCES_WHITE, getApplicationContext().MODE_PRIVATE);
@@ -78,6 +82,7 @@ public class WhiteListCreatorService extends Service {
         timer = new Timer();
         final TimerTask timerTask = new TimerTask() {
             boolean isRunning = false;
+
             @Override
             public void run() {
                 final ActivityManager activityManager =
@@ -88,8 +93,8 @@ public class WhiteListCreatorService extends Service {
                         isRunning = true;
                     }
                 }
-                if(!isRunning){
-                    startService(new Intent(getApplicationContext(),BlockService.class));
+                if (!isRunning) {
+                    startService(new Intent(getApplicationContext(), BlockService.class));
                 }
             }
         };
