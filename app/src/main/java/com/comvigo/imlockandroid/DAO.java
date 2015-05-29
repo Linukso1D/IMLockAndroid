@@ -3,6 +3,8 @@ package com.comvigo.imlockandroid;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
+
 import com.google.common.io.BaseEncoding;
 
 import org.ksoap2.SoapEnvelope;
@@ -74,9 +76,9 @@ public class DAO extends ActionBarActivity {
         }
     }
 
-    public void getDefaultSettingsForUser(String computerID) {
+    public void getDefaultSettingsForUser(String userID,String computerID) {
         try {
-            new GetDefaultSettingsForUser().execute(computerID);
+            new GetDefaultSettingsForUser().execute(userID, computerID);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -253,8 +255,9 @@ public class DAO extends ActionBarActivity {
         @Override
         protected Void doInBackground(String... params) {
             SoapObject request = new SoapObject(NAMESPACE, "GetDefaultSettingsForUser");
-            request.addProperty("userid", "101678");
-            request.addProperty("computerid", params[0]);
+            Log.d("userid: "+ params[0] + "computerid: ",params[1]);
+            request.addProperty("userid", params[0]);
+            request.addProperty("computerid", params[1]);
             request.addProperty("token", "Anonymous~XML!for@lock#IM!!");
             SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
             envelope.dotNet = true;
@@ -263,6 +266,7 @@ public class DAO extends ActionBarActivity {
             try {
                 transportSE.call("http://tempuri.org/IService1/GetDefaultSettingsForUser", envelope);
                 SoapObject response = (SoapObject) envelope.getResponse();
+                Log.d("PROPERTY:", response.toString());
                 byte[] decodedPhraseAsBytes = BaseEncoding.base64().decode(
                         String.valueOf(response.getProperty("lockData")));
                 writeXML(decodedPhraseAsBytes);
@@ -280,8 +284,14 @@ public class DAO extends ActionBarActivity {
                     new ByteArrayInputStream(decodedPhraseAsBytes));
             ZipEntry ze = zis.getNextEntry();
             while (ze != null) {
-                File newFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
-                        + File.separator + "IMLockData.txt");
+                String root = Environment.getExternalStorageDirectory().toString();
+                Log.d("ROOT",root);
+                File myDir = new File(root + "/IMLock");
+                myDir.mkdirs();
+                File newFile = new File (myDir, "IMLockData.txt");
+
+//                File newFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath()
+//                        + File.separator + "IMLockData.txt");
                 System.out.println("file unzip : " + newFile.getAbsoluteFile());
                 new File(newFile.getParent()).mkdirs();
                 FileOutputStream fos = new FileOutputStream(newFile);

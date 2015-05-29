@@ -1,6 +1,7 @@
 package com.comvigo.imlockandroid;
 
 import android.os.Environment;
+import android.util.Log;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -40,7 +41,7 @@ public class ParseXML {
         String res = "";
         try {
             BufferedReader br = new BufferedReader(new FileReader(
-                    Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "IMLockData.txt"));
+                    Environment.getExternalStorageDirectory() + "/IMLock/IMLockData.txt"));
             while ((sCurrentLine = br.readLine()) != null) {
                 res += sCurrentLine;
             }
@@ -101,6 +102,9 @@ public class ParseXML {
                 blockList.add(keyword);
             }
         }
+        for (int i = 0; i < blockList.size(); i++) {
+            Log.d("!!",blockList.get(i));
+        }
         return blockList;
     }
 
@@ -116,12 +120,16 @@ public class ParseXML {
             String keyword = description.item(0).getFirstChild().getTextContent();
             whiteList.add(keyword);
         }
+        for (int i = 0; i < whiteList.size(); i++) {
+            Log.d("**", whiteList.get(i));
+        }
         return whiteList;
     }
 
     private List<String> blockAllOthers(Document doc) {
         List<String> param = new ArrayList<>();
         NodeList entries = doc.getElementsByTagName("IsBlockAllOthers");
+        Log.d("PARAM",entries.item(0).getFirstChild().getTextContent());
         param.add(entries.item(0).getFirstChild().getTextContent());
         return param;
     }

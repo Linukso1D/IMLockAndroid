@@ -12,10 +12,12 @@ import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.provider.Browser;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.comvigo.imlockandroid.Receivers.InternetReceiver;
@@ -94,8 +96,14 @@ public class BlockService extends Service {
                     for (int i = 0; i != processInfos.size(); i++) {
                         ActivityManager.RunningAppProcessInfo info = processInfos.get(i);
                         ActivityManager.RunningTaskInfo foregrountTaskInfo = activityManager.getRunningTasks(1).get(0);
-                        String foregroundTaskPackageName = foregrountTaskInfo.topActivity.getPackageName();
-                        if (browsers.contains(processInfos.get(i).processName)) {
+                        String foregroundTaskPackageName;
+                        if (Build.VERSION.SDK_INT>=21){
+                            foregroundTaskPackageName=processInfos.get(0).processName;
+                        } else{
+                            foregroundTaskPackageName = foregrountTaskInfo.topActivity.getPackageName();
+                        }
+                        Log.d("PROCESS",foregroundTaskPackageName);
+                        if (browsers.contains(foregroundTaskPackageName)) {
                             //if user have opened default browser or chrome - we take url
                             if (foregroundTaskPackageName.equals(processInfos.get(i).processName) ||
                                     foregroundTaskPackageName.equals("com.opera.browser")) {
@@ -103,6 +111,7 @@ public class BlockService extends Service {
                                         foregroundTaskPackageName.equals("com.android.browser")) {
                                     //check the white list
                                     String openedUrl = getUrl(processInfos.get(i).processName);
+                                    Log.d("openedUrl",openedUrl);
                                     if (!comparator(openedUrl)) {
                                         //get default browser
                                         Intent browserIntent = new Intent("android.intent.action.VIEW", Uri.parse("http://"));
@@ -171,7 +180,9 @@ public class BlockService extends Service {
         mCur.moveToFirst();
         mCur.moveToLast();
         url = mCur.getString(mCur.getColumnIndex(Browser.BookmarkColumns.URL));
+        Log.d("URL",url);
         mCur.close();
+
         return url;
     }
 

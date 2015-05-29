@@ -47,19 +47,11 @@ public class WhiteListCreatorService extends Service {
 
         //Get black and white lists
         DAO dao = new DAO();
-        dao.getDefaultSettingsForUser(mSettings.getString("comuterID", ""));
+        dao.getDefaultSettingsForUser(mSettings.getString("userID", ""),mSettings.getString("comuterID", ""));
         ParseXML parseXML = new ParseXML();
         List<String> block = parseXML.getBlockList();
         List<String> white = parseXML.getWhiteList();
-        try {
-            List<String> other = parseXML.blockAllOthers();
-            editor.putString("blockAllOthers", other.get(0));
-            editor.apply();
-        } catch (Exception e) {
-            List<String> other = parseXML.blockAllOthers();
-            editor.putString("blockAllOthers", other.get(0));
-            editor.apply();
-        }
+        getOther();
         //Create blacklist file
         SharedPreferences blackSharedPreferences = getSharedPreferences(APP_PREFERENCES_BLACK, getApplicationContext().MODE_PRIVATE);
         mSettingsBlack = getSharedPreferences(APP_PREFERENCES_BLACK, getApplicationContext().MODE_PRIVATE);
@@ -100,6 +92,20 @@ public class WhiteListCreatorService extends Service {
         };
         timer.schedule(timerTask, 0, 60000);
         return START_NOT_STICKY;
+    }
+
+    private void getOther(){
+        try {
+            SharedPreferences mySharedPreferences = getSharedPreferences(APP_PREFERENCES_SETTINGS, getApplicationContext().MODE_PRIVATE);
+            mSettings = getSharedPreferences(APP_PREFERENCES_SETTINGS, getApplicationContext().MODE_PRIVATE);
+            SharedPreferences.Editor editor = mSettings.edit();
+            ParseXML parseXML = new ParseXML();
+            List<String> other = parseXML.blockAllOthers();
+            editor.putString("blockAllOthers", other.get(0));
+            editor.apply();
+        } catch (Exception e) {
+            getOther();
+        }
     }
 
     @Override

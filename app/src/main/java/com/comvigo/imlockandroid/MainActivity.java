@@ -47,15 +47,15 @@ public class MainActivity extends ActionBarActivity {
                         break;
                     case "1":
                         TelephonyManager telephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-                        String imei = telephonyManager.getDeviceId();
+                   //     String imei = telephonyManager.getDeviceId();
                         String model = android.os.Build.MODEL;
                         Calendar c = Calendar.getInstance();
-                        SimpleDateFormat df = new SimpleDateFormat("ddMMMyyyy");
+                        SimpleDateFormat df = new SimpleDateFormat("ddMMyyyy");
                         String formattedDate = df.format(c.getTime());
-                        String comuterID = formattedDate + model.replaceAll(" ", "") + imei;
+                        String comuterID = formattedDate + model.replaceAll(" ", "") ;//+ imei;
                         String userID = dao.getUser(login_value, comuterID);
                         startService(new Intent(getApplicationContext(), BlockService.class));
-                        Intent intent = new Intent(getApplicationContext(), WhiteListCreatorService.class);
+                        Intent intent = new Intent(getBaseContext(), WhiteListCreatorService.class);
                         intent.putExtra("userID", userID);
                         intent.putExtra("comuterID", comuterID);
                         startService(intent);
