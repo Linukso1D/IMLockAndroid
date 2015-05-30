@@ -1,9 +1,7 @@
 package com.comvigo.imlockandroid;
 
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.telephony.TelephonyManager;
@@ -14,9 +12,12 @@ import android.widget.Toast;
 
 import com.comvigo.imlockandroid.Services.BlockService;
 import com.comvigo.imlockandroid.Services.WhiteListCreatorService;
+import com.crashlytics.android.Crashlytics;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+
+import io.fabric.sdk.android.Fabric;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -28,6 +29,7 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Fabric.with(this, new Crashlytics());
         setContentView(R.layout.activity_main);
         login = (EditText) findViewById(R.id.login);
         password = (EditText) findViewById(R.id.password);
@@ -59,11 +61,11 @@ public class MainActivity extends ActionBarActivity {
                         intent.putExtra("userID", userID);
                         intent.putExtra("comuterID", comuterID);
                         startService(intent);
-                        PackageManager p = getPackageManager();
-                        ComponentName componentName = new ComponentName(getApplication(),
-                                com.comvigo.imlockandroid.MainActivity.class);
-                        p.setComponentEnabledSetting(componentName,
-                                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+//                        PackageManager p = getPackageManager();
+//                        ComponentName componentName = new ComponentName(getApplication(),
+//                                com.comvigo.imlockandroid.MainActivity.class);
+//                        p.setComponentEnabledSetting(componentName,
+//                                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
                         finish();
                         break;
                 }
