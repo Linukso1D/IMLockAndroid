@@ -42,8 +42,10 @@ public class BlockService extends Service {
     public static final String APP_PREFERENCES_BLACK = "BlackList";
     public static final String APP_PREFERENCES_SETTINGS = "Settings";
     boolean hasInternet = false;
-    SharedPreferences mSettingsBlack, mSettingsWhite ,mSettings;
+    SharedPreferences mSettingsBlack, mSettingsWhite, mSettings;
     List<String> browsers;
+    private Handler mPeriodicEventHandler;
+    private final int PERIODIC_EVENT_TIMEOUT = 6000;
 
     @Override
     public void onCreate() {
@@ -97,12 +99,11 @@ public class BlockService extends Service {
                         ActivityManager.RunningAppProcessInfo info = processInfos.get(i);
                         ActivityManager.RunningTaskInfo foregrountTaskInfo = activityManager.getRunningTasks(1).get(0);
                         String foregroundTaskPackageName;
-                        if (Build.VERSION.SDK_INT>=21){
-                            foregroundTaskPackageName=processInfos.get(0).processName;
-                        } else{
+                        if (Build.VERSION.SDK_INT >= 21) {
+                            foregroundTaskPackageName = processInfos.get(0).processName;
+                        } else {
                             foregroundTaskPackageName = foregrountTaskInfo.topActivity.getPackageName();
                         }
-                        Log.d("PROCESS",foregroundTaskPackageName);
                         if (browsers.contains(foregroundTaskPackageName)) {
                             //if user have opened default browser or chrome - we take url
                             if (foregroundTaskPackageName.equals(processInfos.get(i).processName) ||
@@ -111,13 +112,14 @@ public class BlockService extends Service {
                                         foregroundTaskPackageName.equals("com.android.browser")) {
                                     //check the white list
                                     String openedUrl = getUrl(processInfos.get(i).processName);
-                                    Log.d("openedUrl",openedUrl);
+                                    Log.d("openedUrl", openedUrl);
                                     if (!comparator(openedUrl)) {
                                         //get default browser
                                         Intent browserIntent = new Intent("android.intent.action.VIEW", Uri.parse("http://"));
                                         ResolveInfo resolveInfo = getPackageManager().resolveActivity(browserIntent, PackageManager.MATCH_DEFAULT_ONLY);
                                         String defaultBrowser = resolveInfo.activityInfo.packageName;
                                         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://comvigo.com"));
+                                        Browser.deleteFromHistory(getContentResolver(), openedUrl);
                                         //open new tab on default browser
                                         if (defaultBrowser.equals("com.android.chrome") || defaultBrowser.equals("com.android.browser")) {
                                             intent.setPackage(defaultBrowser);
@@ -126,6 +128,7 @@ public class BlockService extends Service {
                                         }
                                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                         startActivity(intent);
+                                        makePause();
                                     }
                                 } else {
                                     // if user have opened other browser - go to launcher
@@ -144,7 +147,7 @@ public class BlockService extends Service {
                     }
                 }
             };
-            timer.schedule(timerTask, 3000, 15000);
+            timer.schedule(timerTask, 0, 1000);
         } else {
             timer.cancel();
         }
@@ -169,7 +172,6 @@ public class BlockService extends Service {
         if (browser.equals("com.android.chrome")) {
             mCur = getContentResolver().query(uriCustom, proj, sel, null, Browser.BookmarkColumns.DATE + " ASC");
         } else {
-
             mCur = getContentResolver().query(Browser.BOOKMARKS_URI, proj, sel, null, null);
             mCur.moveToFirst();
             while (mCur.isAfterLast() == false) {
@@ -180,11 +182,25 @@ public class BlockService extends Service {
         mCur.moveToFirst();
         mCur.moveToLast();
         url = mCur.getString(mCur.getColumnIndex(Browser.BookmarkColumns.URL));
-        Log.d("URL",url);
+        Log.d("URL", url);
         mCur.close();
 
         return url;
     }
+
+    private void makePause() {
+        Log.d("makePause", "in");
+        mPeriodicEventHandler = new Handler();
+        mPeriodicEventHandler.postDelayed(doPeriodicTask, PERIODIC_EVENT_TIMEOUT);
+    }
+
+    private Runnable doPeriodicTask = new Runnable() {
+        public void run() {
+            //your action here
+            mPeriodicEventHandler.postDelayed(doPeriodicTask, PERIODIC_EVENT_TIMEOUT);
+        }
+    };
+
 
     /**
      * Check if url's domain name in white list
@@ -210,7 +226,7 @@ public class BlockService extends Service {
                 return false;
             }
         }
-        if (mSettings.getString("blockAllOthers","").equals("true")){
+        if (mSettings.getString("blockAllOthers", "").equals("true")) {
             return false;
         }
         return true;

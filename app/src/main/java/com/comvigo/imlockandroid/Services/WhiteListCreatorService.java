@@ -5,6 +5,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.IBinder;
+import android.util.Log;
 
 import com.comvigo.imlockandroid.DAO;
 import com.comvigo.imlockandroid.ParseXML;
@@ -36,11 +37,12 @@ public class WhiteListCreatorService extends Service {
         SharedPreferences mySharedPreferences = getSharedPreferences(APP_PREFERENCES_SETTINGS, getApplicationContext().MODE_PRIVATE);
         mSettings = getSharedPreferences(APP_PREFERENCES_SETTINGS, getApplicationContext().MODE_PRIVATE);
         SharedPreferences.Editor editor = mSettings.edit();
+        editor.clear();
         editor.putString("settingsID", "6333");
         editor.putString("userID", intent.getStringExtra("userID"));
         editor.putString("comuterID", intent.getStringExtra("comuterID"));
         editor.apply();
-
+        Log.d("COMPID",mSettings.getString("comuterID", ""));
 //        new DAO().getSettings(mSettings.getString("userID", ""), mSettings.getString("settingsID", ""));
 //        new DAO().makeforThisComputer(mSettings.getString("comuterID", ""));
 //        new DAO().getSettingsList();
