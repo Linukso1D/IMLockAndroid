@@ -8,47 +8,11 @@
     android:weightSum="1"
     android:background="#ffffffff">
 
-
-    <ImageView
+    <LinearLayout
+        android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/imageView"
-        android:src="@drawable/logo"
-        android:layout_gravity="center_horizontal"
-        android:layout_weight="0.19"
-        android:layout_marginLeft="30dp"
-        android:layout_marginRight="30dp"
-        android:layout_marginBottom="20dp" />
-
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:inputType="textEmailAddress"
-        android:ems="10"
-        android:id="@+id/login"
-        android:hint="Login"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginLeft="30dp"
-        android:layout_marginRight="30dp" />
-
-    <EditText
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:inputType="textPassword"
-        android:ems="10"
-        android:id="@+id/password"
-        android:hint="Password"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginRight="30dp"
-        android:layout_marginLeft="30dp" />
-
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Log in"
-        android:id="@+id/send"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginLeft="30dp"
-        android:layout_marginRight="30dp" />
+        android:layout_height="match_parent"
+        android:id="@+id/activity_container">
+    </LinearLayout>
 
 </LinearLayout>
