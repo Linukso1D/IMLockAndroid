@@ -23,13 +23,13 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         Fabric.with(this, new Crashlytics());
         setContentView(R.layout.activity_main);
-
         SharedPreferences mySharedPreferences = getSharedPreferences(APP_PREFERENCES_SETTINGS, getApplicationContext().MODE_PRIVATE);
         mSettings = getSharedPreferences(APP_PREFERENCES_SETTINGS, getApplicationContext().MODE_PRIVATE);
         FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
         Log.d("userID", mSettings.getString("userID",""));
         if (!mSettings.getString("userID","").equals("")){
             fragmentTransaction.add(R.id.activity_container, new SettingsFragment());
+            fragmentTransaction.addToBackStack("");
             fragmentTransaction.commit();
         }else {
             fragmentTransaction.add(R.id.activity_container, new LoginFragment());
@@ -37,4 +37,9 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        getFragmentManager().popBackStack();
+    }
 }

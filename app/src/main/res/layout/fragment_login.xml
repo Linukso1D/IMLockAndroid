@@ -53,6 +53,17 @@
             android:layout_gravity="center_horizontal"
             android:layout_marginLeft="30dp"
             android:layout_marginRight="30dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/forgot_password"
+            android:id="@+id/retrive_password"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_weight="0.19"
+            android:clickable="true"
+            android:gravity="bottom"
+            android:textColor="#ff7178ff" />
     </LinearLayout>
 
 

@@ -21,19 +21,28 @@
             android:textColor="#ff000000"
             android:layout_weight="0.5" />
 
-        <CheckBox
+        <LinearLayout
+            android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Show notifications"
-            android:id="@+id/checkBox_notification"
-            android:layout_weight="1"
-            android:checked="false" />
+            android:weightSum="2">
 
-        <Button
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Save"
-            android:id="@+id/button_save" />
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pause filtering"
+                android:id="@+id/button_pause"
+                android:layout_weight="1"
+                android:layout_margin="10dp" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Resume filtering"
+                android:id="@+id/button_resume"
+                android:layout_weight="1"
+                android:layout_margin="10dp" />
+        </LinearLayout>
 
     </LinearLayout>
 
@@ -43,6 +52,7 @@
         android:text="Sign Out"
         android:id="@+id/button_signout"
         android:layout_weight="1"
-        android:layout_gravity="bottom" />
+        android:layout_gravity="bottom"
+        android:layout_margin="10dp" />
 
 </FrameLayout>

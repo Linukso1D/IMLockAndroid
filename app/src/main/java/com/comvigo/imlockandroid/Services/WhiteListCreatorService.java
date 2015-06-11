@@ -19,7 +19,7 @@ import java.util.TimerTask;
  */
 public class WhiteListCreatorService extends Service {
 
-    Timer timer, timerCheck;
+    Timer timer;
 
     public static final String APP_PREFERENCES_WHITE = "WhiteList";
     public static final String APP_PREFERENCES_BLACK = "BlackList";
@@ -55,12 +55,26 @@ public class WhiteListCreatorService extends Service {
 
             @Override
             public void run() {
+
+                Log.d("WhiteListCreatorService","timerTask");
+
                 //Get black and white lists
                 dao.getDefaultSettingsForUser(mSettings.getString("userID", ""), mSettings.getString("comuterID", ""));
                 ParseXML parseXML = new ParseXML();
                 List<String> block = parseXML.getBlockList();
                 List<String> white = parseXML.getWhiteList();
-                getOther();
+
+                //getSettings
+                SharedPreferences mySharedPreferences = getSharedPreferences(APP_PREFERENCES_SETTINGS, getApplicationContext().MODE_PRIVATE);
+                mSettings = getSharedPreferences(APP_PREFERENCES_SETTINGS, getApplicationContext().MODE_PRIVATE);
+                SharedPreferences.Editor editor = mSettings.edit();
+                List<String> other = parseXML.stringList();
+                editor.putString("blockAllOthers", other.get(0));
+                editor.putString("RedirectURL", other.get(1));
+                editor.putString("IsShowNotification", other.get(2));
+                editor.putString("NotificationMessage1", other.get(3));
+                editor.apply();
+
                 //Create blacklist file
                 SharedPreferences blackSharedPreferences = getSharedPreferences(APP_PREFERENCES_BLACK, getApplicationContext().MODE_PRIVATE);
                 mSettingsBlack = getSharedPreferences(APP_PREFERENCES_BLACK, getApplicationContext().MODE_PRIVATE);
@@ -71,6 +85,7 @@ public class WhiteListCreatorService extends Service {
                     editorBlack.putString(block.get(i), APP_PREFERENCES_NAME);
                 }
                 editorBlack.apply();
+
                 //create whitelist file
                 SharedPreferences whiteSharedPreferences = getSharedPreferences(APP_PREFERENCES_WHITE, getApplicationContext().MODE_PRIVATE);
                 mSettingsWhite = getSharedPreferences(APP_PREFERENCES_WHITE, getApplicationContext().MODE_PRIVATE);
@@ -81,6 +96,7 @@ public class WhiteListCreatorService extends Service {
                     editorWhite.putString(white.get(i), APP_PREFERENCES_NAME);
                 }
                 editorWhite.apply();
+
                 //check if BlockService is running
                 final ActivityManager activityManager =
                         (ActivityManager) getApplicationContext().getSystemService(getApplicationContext().ACTIVITY_SERVICE);
@@ -97,20 +113,6 @@ public class WhiteListCreatorService extends Service {
         };
         timer.schedule(timerTask, 0, 60000);
         return START_NOT_STICKY;
-    }
-
-    private void getOther() {
-        try {
-            SharedPreferences mySharedPreferences = getSharedPreferences(APP_PREFERENCES_SETTINGS, getApplicationContext().MODE_PRIVATE);
-            mSettings = getSharedPreferences(APP_PREFERENCES_SETTINGS, getApplicationContext().MODE_PRIVATE);
-            SharedPreferences.Editor editor = mSettings.edit();
-            ParseXML parseXML = new ParseXML();
-            List<String> other = parseXML.blockAllOthers();
-            editor.putString("blockAllOthers", other.get(0));
-            editor.apply();
-        } catch (Exception e) {
-            getOther();
-        }
     }
 
     @Override

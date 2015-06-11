@@ -255,7 +255,6 @@ public class DAO extends ActionBarActivity {
         @Override
         protected Void doInBackground(String... params) {
             SoapObject request = new SoapObject(NAMESPACE, "GetDefaultSettingsForUser");
-            Log.d("userid: "+ params[0] + "computerid: ",params[1]);
             request.addProperty("userid", params[0]);
             request.addProperty("computerid", params[1]);
             request.addProperty("token", "Anonymous~XML!for@lock#IM!!");
@@ -266,7 +265,7 @@ public class DAO extends ActionBarActivity {
             try {
                 transportSE.call("http://tempuri.org/IService1/GetDefaultSettingsForUser", envelope);
                 SoapObject response = (SoapObject) envelope.getResponse();
-                Log.d("PROPERTY:", response.toString());
+                Log.d("GetDefaultSettingsForUser:", response.toString());
                 byte[] decodedPhraseAsBytes = BaseEncoding.base64().decode(
                         String.valueOf(response.getProperty("lockData")));
                 writeXML(decodedPhraseAsBytes);
@@ -278,21 +277,17 @@ public class DAO extends ActionBarActivity {
     }
 
     private void writeXML(byte[] decodedPhraseAsBytes) {
+        Log.d("DAO:", "writeXML");
         byte[] buffer = new byte[1024];
         try {
             ZipInputStream zis = new ZipInputStream(
                     new ByteArrayInputStream(decodedPhraseAsBytes));
             ZipEntry ze = zis.getNextEntry();
             while (ze != null) {
-                String root = Environment.getExternalStorageDirectory().toString();
-                Log.d("ROOT",root);
-                File myDir = new File(root + "/IMLock");
-                myDir.mkdirs();
-                File newFile = new File (myDir, "IMLockData.txt");
-
-//                File newFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath()
-//                        + File.separator + "IMLockData.txt");
-                System.out.println("file unzip : " + newFile.getAbsoluteFile());
+          //      String root = Environment.getExternalStorageDirectory().toString();
+          //      File myDir = new File(root + "/IMLock");
+          //      myDir.mkdirs();
+                File newFile = new File (Environment.getExternalStorageDirectory() + "/IMLock/IMLockData.txt");
                 new File(newFile.getParent()).mkdirs();
                 FileOutputStream fos = new FileOutputStream(newFile);
                 int len;

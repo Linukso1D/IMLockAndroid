@@ -32,11 +32,12 @@ public class ParseXML {
         return parseXML("white");
     }
 
-    public List<String> blockAllOthers() {
+    public List<String> stringList() {
         return parseXML("other");
     }
 
-    public void getXML(){
+    public void getXML() {
+        Log.d("ParseXML","getXML");
         String sCurrentLine;
         String res = "";
         try {
@@ -46,8 +47,7 @@ public class ParseXML {
                 res += sCurrentLine;
             }
             String utf8 = res.replace("utf-16", "utf-8");
-            File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath() +
-                    File.separator + "IMLockData.txt");
+            File file = new File(Environment.getExternalStorageDirectory() + "/IMLock/IMLockData.txt");
             FileOutputStream fop = new FileOutputStream(file);
             byte[] contentInBytes = utf8.getBytes();
             fop.write(contentInBytes);
@@ -59,14 +59,14 @@ public class ParseXML {
     }
 
     private List<String> parseXML(String command) {
-
         List<String> list = new ArrayList<>();
         try {
+
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             dbf.setValidating(false);
             DocumentBuilder db = dbf.newDocumentBuilder();
-            Document doc = db.parse(new FileInputStream(Environment.getExternalStorageDirectory().getAbsolutePath() +
-                    File.separator + "IMLockData.txt"));
+            Document doc = db.parse(new FileInputStream(Environment.getExternalStorageDirectory() + "/IMLock/IMLockData.txt"));
+
             switch (command) {
                 case "black":
                     list = getBlock(doc);
@@ -75,16 +75,17 @@ public class ParseXML {
                     list = getWhite(doc);
                     break;
                 case "other":
-                    list = blockAllOthers(doc);
+                    list = settingsList(doc);
                     break;
             }
-        } catch (Exception e) {
+        }catch (Exception e){
             e.printStackTrace();
         }
         return list;
     }
 
     private List<String> getBlock(Document doc) {
+        Log.d("ParseXML","getBlock");
         List<String> blockList = new ArrayList<>();
         List<String> categories = new ArrayList<>();
         categories.add("Blocked");
@@ -102,13 +103,12 @@ public class ParseXML {
                 blockList.add(keyword);
             }
         }
-        for (int i = 0; i < blockList.size(); i++) {
-            Log.d("!!",blockList.get(i));
-        }
+        Log.d("getBlock", String.valueOf(blockList.size()));
         return blockList;
     }
 
     private List<String> getWhite(Document doc) {
+        Log.d("ParseXML","getWhite");
         List<String> whiteList = new ArrayList<>();
         NodeList entries = doc.getElementsByTagName("WhiteList");
         Element node1 = (Element) entries.item(0);
@@ -120,16 +120,21 @@ public class ParseXML {
             String keyword = description.item(0).getFirstChild().getTextContent();
             whiteList.add(keyword);
         }
-        for (int i = 0; i < whiteList.size(); i++) {
-            Log.d("**", whiteList.get(i));
-        }
+        Log.d("getWhite", String.valueOf(whiteList.size()));
         return whiteList;
     }
 
-    private List<String> blockAllOthers(Document doc) {
+    private List<String> settingsList(Document doc) {
+        Log.d("ParseXML","settingsList");
         List<String> param = new ArrayList<>();
-        NodeList entries = doc.getElementsByTagName("IsBlockAllOthers");
-        Log.d("PARAM",entries.item(0).getFirstChild().getTextContent());
+        NodeList entries;
+        entries = doc.getElementsByTagName("IsBlockAllOthers");
+        param.add(entries.item(0).getFirstChild().getTextContent());
+        entries = doc.getElementsByTagName("RedirectURL");
+        param.add(entries.item(0).getFirstChild().getTextContent());
+        entries = doc.getElementsByTagName("IsShowNotification");
+        param.add(entries.item(0).getFirstChild().getTextContent());
+        entries = doc.getElementsByTagName("NotificationMessage1");
         param.add(entries.item(0).getFirstChild().getTextContent());
         return param;
     }

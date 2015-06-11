@@ -44,8 +44,6 @@ public class BlockService extends Service {
     boolean hasInternet = false;
     SharedPreferences mSettingsBlack, mSettingsWhite, mSettings;
     List<String> browsers;
-    private Handler mPeriodicEventHandler;
-    private final int PERIODIC_EVENT_TIMEOUT = 6000;
 
     @Override
     public void onCreate() {
@@ -111,15 +109,24 @@ public class BlockService extends Service {
                                 if (foregroundTaskPackageName.equals("com.android.chrome") ||
                                         foregroundTaskPackageName.equals("com.android.browser")) {
                                     //check the white list
-                                    String openedUrl = getUrl(processInfos.get(i).processName);
+                                    String openedUrl;
+                                    try {
+                                        openedUrl = getUrl(processInfos.get(i).processName);
+                                    }catch (Exception e){
+                                        openedUrl = "null";
+                                    }
                                     Log.d("openedUrl", openedUrl);
                                     if (!comparator(openedUrl)) {
+
                                         //get default browser
                                         Intent browserIntent = new Intent("android.intent.action.VIEW", Uri.parse("http://"));
                                         ResolveInfo resolveInfo = getPackageManager().resolveActivity(browserIntent, PackageManager.MATCH_DEFAULT_ONLY);
                                         String defaultBrowser = resolveInfo.activityInfo.packageName;
+
+                                        //Set site for redirect
                                         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://comvigo.com"));
                                         Browser.deleteFromHistory(getContentResolver(), openedUrl);
+
                                         //open new tab on default browser
                                         if (defaultBrowser.equals("com.android.chrome") || defaultBrowser.equals("com.android.browser")) {
                                             intent.setPackage(defaultBrowser);
@@ -128,15 +135,22 @@ public class BlockService extends Service {
                                         }
                                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                         startActivity(intent);
-                                        makePause();
+
+                                        // send a message to user
+                                        Message msg = handler.obtainMessage();
+                                        msg.arg1 = 1;
+                                        handler.sendMessage(msg);
                                     }
                                 } else {
+
                                     // if user have opened other browser - go to launcher
                                     startActivity(new Intent("android.intent.action.MAIN")
                                             .addCategory("android.intent.category.HOME")
                                             .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+
                                     // kill background process of browser
                                     activityManager.killBackgroundProcesses(info.processName);
+
                                     // send a message to user
                                     Message msg = handler.obtainMessage();
                                     msg.arg1 = 1;
@@ -155,8 +169,8 @@ public class BlockService extends Service {
 
     private final Handler handler = new Handler() {
         public void handleMessage(Message msg) {
-            if (msg.arg1 == 1)
-                Toast.makeText(getApplicationContext(), "Site blocked", Toast.LENGTH_LONG).show();
+            if (mSettings.getString("IsShowNotification","").equals("true"))
+                Toast.makeText(getApplicationContext(), mSettings.getString("NotificationMessage1",""), Toast.LENGTH_LONG).show();
         }
     };
 
@@ -187,20 +201,6 @@ public class BlockService extends Service {
 
         return url;
     }
-
-    private void makePause() {
-        Log.d("makePause", "in");
-        mPeriodicEventHandler = new Handler();
-        mPeriodicEventHandler.postDelayed(doPeriodicTask, PERIODIC_EVENT_TIMEOUT);
-    }
-
-    private Runnable doPeriodicTask = new Runnable() {
-        public void run() {
-            //your action here
-            mPeriodicEventHandler.postDelayed(doPeriodicTask, PERIODIC_EVENT_TIMEOUT);
-        }
-    };
-
 
     /**
      * Check if url's domain name in white list

@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.comvigo.imlockandroid.DAO;
@@ -25,6 +26,7 @@ public class LoginFragment extends Fragment {
 
     Button send;
     EditText login, password;
+    TextView retrivePassword;
     String login_value, password_value;
     View view;
 
@@ -76,11 +78,20 @@ public class LoginFragment extends Fragment {
 //                                com.comvigo.imlockandroid.MainActivity.class);
 //                        p.setComponentEnabledSetting(componentName,
 //                                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+
                         FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
                         fragmentTransaction.replace(R.id.activity_container, new SettingsFragment());
                         fragmentTransaction.commit();
                         break;
                 }
+            }
+        });
+        retrivePassword = (TextView) view.findViewById(R.id.retrive_password);
+        retrivePassword.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+                fragmentTransaction.replace(R.id.activity_container, new RetrievePassword());
+                fragmentTransaction.commit();
             }
         });
         return view;
