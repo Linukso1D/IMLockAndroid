@@ -28,7 +28,7 @@ public class MainActivity extends ActionBarActivity {
         FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
         Log.d("userID", mSettings.getString("userID",""));
         if (!mSettings.getString("userID","").equals("")){
-            fragmentTransaction.add(R.id.activity_container, new SettingsFragment());
+              fragmentTransaction.add(R.id.activity_container, new SettingsFragment());
             fragmentTransaction.addToBackStack("");
             fragmentTransaction.commit();
         }else {

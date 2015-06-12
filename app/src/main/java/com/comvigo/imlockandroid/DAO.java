@@ -50,19 +50,18 @@ public class DAO extends ActionBarActivity {
         return userID;
     }
 
-    public String makeforThisComputer(String comuterID) {
-        String userID = "";
+    public String makeforThisComputer(String userID, String comuterID) {
         try {
-            userID = String.valueOf(new MakeforThisComputer().execute(comuterID).get());
+            userID = String.valueOf(new MakeforThisComputer().execute(userID, comuterID).get());
         } catch (Exception e) {
             e.printStackTrace();
         }
         return userID;
     }
 
-    public void getSettingsList() {
+    public void getSettingsList(String userID) {
         try {
-            new GetSettingsList().execute().get();
+            new GetSettingsList().execute(userID).get();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -171,12 +170,12 @@ public class DAO extends ActionBarActivity {
     /**
      * GetSettingsList
      */
-    private class GetSettingsList extends AsyncTask<Void, Void, Void> {
+    private class GetSettingsList extends AsyncTask<String, Void, Void> {
         @Override
-        protected Void doInBackground(Void... params) {
+        protected Void doInBackground(String... params) {
             String serverResult = "0";
             SoapObject request = new SoapObject(NAMESPACE, "GetAllSettingsByUserID");
-            request.addProperty("Userid", "101678");
+            request.addProperty("Userid", params[0]);
             request.addProperty("token", "Anonymous~XML!for@lock#IM!!");
             SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
             envelope.dotNet = true;
@@ -186,6 +185,7 @@ public class DAO extends ActionBarActivity {
                 transportSE.call("http://tempuri.org/IService1/GetAllSettingsByUserID", envelope);
                 SoapObject response = (SoapObject) envelope.getResponse();
                 serverResult = response.toString();
+                Log.d("dd",serverResult);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -229,9 +229,10 @@ public class DAO extends ActionBarActivity {
         protected Void doInBackground(String... params) {
             String serverResult = "0";
             SoapObject request = new SoapObject(NAMESPACE, "MakeforThisComputer");
-            request.addProperty("settingid", "6333");
-            request.addProperty("userid", "101678");
-            request.addProperty("computerid", params[0]);
+            Log.d("MakeforThisComputer", params[0] + params[1]);
+            request.addProperty("settingid", "1");
+            request.addProperty("userid", params[0]);
+            request.addProperty("computerid", params[1]);
             request.addProperty("token", "Anonymous~XML!for@lock#IM!!");
             SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
             envelope.dotNet = true;

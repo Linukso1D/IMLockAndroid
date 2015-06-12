@@ -23,7 +23,6 @@ public class SettingsFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
     }
 
     @Override
@@ -33,6 +32,9 @@ public class SettingsFragment extends Fragment {
         pauseFiltering = (Button) view.findViewById(R.id.button_pause);
         signOut = (Button) view.findViewById(R.id.button_signout);
         resumeFiltering = (Button) view.findViewById(R.id.button_resume);
+        //check if BlockService is running
+
+
 
         View.OnClickListener onClickListener = new View.OnClickListener() {
             @Override
@@ -53,10 +55,14 @@ public class SettingsFragment extends Fragment {
                     case R.id.button_pause:
                         getActivity().stopService(new Intent(getActivity(), BlockService.class));
                         getActivity().stopService(new Intent(getActivity(), WhiteListCreatorService.class));
+                        pauseFiltering.setEnabled(false);
+                        resumeFiltering.setEnabled(true);
                         break;
                     case R.id.button_resume:
                         getActivity().startService(new Intent(getActivity(), BlockService.class));
                         getActivity().startService(new Intent(getActivity(), WhiteListCreatorService.class));
+                        pauseFiltering.setEnabled(true);
+                        resumeFiltering.setEnabled(false);
                         break;
                 }
 

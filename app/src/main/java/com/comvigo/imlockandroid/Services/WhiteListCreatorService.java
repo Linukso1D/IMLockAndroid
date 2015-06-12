@@ -46,12 +46,16 @@ public class WhiteListCreatorService extends Service {
 
 //        new DAO().getSettings(mSettings.getString("userID", ""), mSettings.getString("settingsID", ""));
 //        new DAO().makeforThisComputer(mSettings.getString("comuterID", ""));
-//        new DAO().getSettingsList();
+
+        DAO dao = new DAO();
+        dao.getDefaultSettingsForUser(mSettings.getString("userID", ""), mSettings.getString("comuterID", ""));
+        dao.makeforThisComputer(mSettings.getString("userID", ""), mSettings.getString("comuterID", ""));
+        dao.getSettingsList(mSettings.getString("userID", ""));
 
         timer = new Timer();
         final TimerTask timerTask = new TimerTask() {
             boolean isRunning = false;
-            DAO dao = new DAO();
+
 
             @Override
             public void run() {
@@ -59,7 +63,7 @@ public class WhiteListCreatorService extends Service {
                 Log.d("WhiteListCreatorService","timerTask");
 
                 //Get black and white lists
-                dao.getDefaultSettingsForUser(mSettings.getString("userID", ""), mSettings.getString("comuterID", ""));
+
                 ParseXML parseXML = new ParseXML();
                 List<String> block = parseXML.getBlockList();
                 List<String> white = parseXML.getWhiteList();
@@ -68,12 +72,18 @@ public class WhiteListCreatorService extends Service {
                 SharedPreferences mySharedPreferences = getSharedPreferences(APP_PREFERENCES_SETTINGS, getApplicationContext().MODE_PRIVATE);
                 mSettings = getSharedPreferences(APP_PREFERENCES_SETTINGS, getApplicationContext().MODE_PRIVATE);
                 SharedPreferences.Editor editor = mSettings.edit();
-                List<String> other = parseXML.stringList();
-                editor.putString("blockAllOthers", other.get(0));
-                editor.putString("RedirectURL", other.get(1));
-                editor.putString("IsShowNotification", other.get(2));
-                editor.putString("NotificationMessage1", other.get(3));
-                editor.apply();
+                try {
+                    List<String> other = parseXML.stringList();
+                    editor.clear();
+                    editor.commit();
+                    editor.putString("blockAllOthers", other.get(0));
+                    editor.putString("RedirectURL", other.get(1));
+                    editor.putString("IsShowNotification", other.get(2));
+                    editor.putString("NotificationMessage1", other.get(3));
+                    editor.apply();
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
 
                 //Create blacklist file
                 SharedPreferences blackSharedPreferences = getSharedPreferences(APP_PREFERENCES_BLACK, getApplicationContext().MODE_PRIVATE);
