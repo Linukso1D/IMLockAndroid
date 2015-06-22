@@ -8,8 +8,10 @@ import android.os.IBinder;
 import android.util.Log;
 
 import com.comvigo.imlockandroid.DAO;
+import com.comvigo.imlockandroid.Models.SettingItem;
 import com.comvigo.imlockandroid.ParseXML;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -36,21 +38,24 @@ public class WhiteListCreatorService extends Service {
         //Create user settings file
         SharedPreferences mySharedPreferences = getSharedPreferences(APP_PREFERENCES_SETTINGS, getApplicationContext().MODE_PRIVATE);
         mSettings = getSharedPreferences(APP_PREFERENCES_SETTINGS, getApplicationContext().MODE_PRIVATE);
-        SharedPreferences.Editor editor = mSettings.edit();
-        editor.clear();
-        editor.putString("settingsID", "6333");
-        editor.putString("userID", intent.getStringExtra("userID"));
-        editor.putString("comuterID", intent.getStringExtra("comuterID"));
-        editor.apply();
+      //  SharedPreferences.Editor editor = mSettings.edit();
+//        editor.clear();
+////        editor.putString("settingsID", "6333");
+//
+//        editor.apply();
         Log.d("COMPID", mSettings.getString("comuterID", ""));
+        Log.d("SETID", mSettings.getString("settingsID", ""));
 
 //        new DAO().getSettings(mSettings.getString("userID", ""), mSettings.getString("settingsID", ""));
 //        new DAO().makeforThisComputer(mSettings.getString("comuterID", ""));
 
         DAO dao = new DAO();
-        dao.getDefaultSettingsForUser(mSettings.getString("userID", ""), mSettings.getString("comuterID", ""));
+//        dao.getDefaultSettingsForUser(mSettings.getString("userID", ""), mSettings.getString("comuterID", ""));
+        dao.getSettings(mSettings.getString("userID", ""), mSettings.getString("settingsID", ""));
         dao.makeforThisComputer(mSettings.getString("userID", ""), mSettings.getString("comuterID", ""));
-        dao.getSettingsList(mSettings.getString("userID", ""));
+        ArrayList<SettingItem> settings = dao.getSettingsList(mSettings.getString("userID", ""));
+
+
 
         timer = new Timer();
         final TimerTask timerTask = new TimerTask() {

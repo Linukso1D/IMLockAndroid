@@ -3,7 +3,7 @@ package com.comvigo.imlockandroid.Fragments;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Context;
-import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.view.LayoutInflater;
@@ -16,8 +16,6 @@ import android.widget.Toast;
 
 import com.comvigo.imlockandroid.DAO;
 import com.comvigo.imlockandroid.R;
-import com.comvigo.imlockandroid.Services.BlockService;
-import com.comvigo.imlockandroid.Services.WhiteListCreatorService;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -29,6 +27,10 @@ public class LoginFragment extends Fragment {
     TextView retrivePassword;
     String login_value, password_value;
     View view;
+
+    public static final String APP_PREFERENCES_SETTINGS = "Settings";
+    public static final String APP_PREFERENCES_NAME = "";
+    SharedPreferences mSettings;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -58,6 +60,10 @@ public class LoginFragment extends Fragment {
                         Toast.makeText(getActivity().getApplication(), "Server connection error", Toast.LENGTH_LONG).show();
                         break;
                     case "1":
+                        SharedPreferences mySharedPreferences = getActivity().getSharedPreferences(APP_PREFERENCES_SETTINGS, getActivity().MODE_PRIVATE);
+                        mSettings = getActivity().getSharedPreferences(APP_PREFERENCES_SETTINGS, getActivity().MODE_PRIVATE);
+                        SharedPreferences.Editor editor = mSettings.edit();
+
                         TelephonyManager telephonyManager = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
                         //     String imei = telephonyManager.getDeviceId();
                         String model = android.os.Build.MODEL;
@@ -66,11 +72,11 @@ public class LoginFragment extends Fragment {
                         String formattedDate = df.format(c.getTime());
                         String comuterID = formattedDate + model.replaceAll(" ", "") ;//+ imei;
                         String userID = dao.getUser(login_value, comuterID);
-                        getActivity().startService(new Intent(getActivity().getApplicationContext(), BlockService.class));
-                        Intent intent = new Intent(getActivity().getBaseContext(), WhiteListCreatorService.class);
-                        intent.putExtra("userID", userID);
-                        intent.putExtra("comuterID", comuterID);
-                        getActivity().startService(intent);
+
+//                        Intent intent = new Intent(getActivity().getBaseContext(), WhiteListCreatorService.class);
+                        editor.putString("userID", userID);
+                        editor.putString("comuterID", comuterID);
+                        editor.commit();
 
                         //To delete app icon
 //                        PackageManager p = getPackageManager();
@@ -80,7 +86,7 @@ public class LoginFragment extends Fragment {
 //                                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
 
                         FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
-                        fragmentTransaction.replace(R.id.activity_container, new SettingsFragment());
+                        fragmentTransaction.replace(R.id.activity_container, new SettingsChooserFragment());
                         fragmentTransaction.commit();
                         break;
                 }

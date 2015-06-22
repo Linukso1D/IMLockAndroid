@@ -5,7 +5,11 @@ import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 
+import com.comvigo.imlockandroid.Factories.GsonFactory;
+import com.comvigo.imlockandroid.Models.SettingItem;
 import com.google.common.io.BaseEncoding;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 
 import org.ksoap2.SoapEnvelope;
 import org.ksoap2.serialization.SoapObject;
@@ -16,6 +20,9 @@ import org.ksoap2.transport.HttpTransportSE;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -59,11 +66,24 @@ public class DAO extends ActionBarActivity {
         return userID;
     }
 
-    public void getSettingsList(String userID) {
+    public ArrayList getSettingsList(String userID) {
         try {
-            new GetSettingsList().execute(userID).get();
+            String settingsList = new GetSettingsList().execute(userID).get();
+            String eee = settingsList.replaceAll("=", ":");
+            String rrr = eee.replaceAll(":anyType",":");
+
+            Log.d("aa", rrr);
+            JsonObject accRespon = GsonFactory.getGsonInstance().fromJson(rrr, JsonObject.class);
+            String personObject = accRespon.get("anyType").toString();
+            Type collectionType = new TypeToken<List<SettingItem>>() {
+            }.getType();
+            ArrayList<SettingItem> settings = GsonFactory.getGsonInstance().fromJson(personObject, collectionType);
+            Log.d("SETTTTTT", settings.toString());
+            return settings;
         } catch (Exception e) {
             e.printStackTrace();
+            Log.d("FUCKKKK", "FUCKKKK");
+            return  null;
         }
     }
 
@@ -170,9 +190,9 @@ public class DAO extends ActionBarActivity {
     /**
      * GetSettingsList
      */
-    private class GetSettingsList extends AsyncTask<String, Void, Void> {
+    private class GetSettingsList extends AsyncTask<String, Void, String> {
         @Override
-        protected Void doInBackground(String... params) {
+        protected String doInBackground(String... params) {
             String serverResult = "0";
             SoapObject request = new SoapObject(NAMESPACE, "GetAllSettingsByUserID");
             request.addProperty("Userid", params[0]);
@@ -180,16 +200,16 @@ public class DAO extends ActionBarActivity {
             SoapSerializationEnvelope envelope = new SoapSerializationEnvelope(SoapEnvelope.VER11);
             envelope.dotNet = true;
             envelope.setOutputSoapObject(request);
-            HttpTransportSE transportSE = new HttpTransportSE(SETTINGS);
+            HttpTransportSE transportSE = new HttpTransportSE("http://webservice.blockinternet.net/ServiceforAndroid.svc");
             try {
-                transportSE.call("http://tempuri.org/IService1/GetAllSettingsByUserID", envelope);
-                SoapObject response = (SoapObject) envelope.getResponse();
+                transportSE.call("http://tempuri.org/IServiceforAndroid/GetAllSettingsByUserID", envelope);
+                SoapPrimitive response = (SoapPrimitive) envelope.getResponse();
                 serverResult = response.toString();
-                Log.d("dd",serverResult);
+                Log.d("GetAllSettingsByUserID",serverResult);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            return null;
+            return serverResult;
         }
     }
 
@@ -266,9 +286,10 @@ public class DAO extends ActionBarActivity {
             try {
                 transportSE.call("http://tempuri.org/IService1/GetDefaultSettingsForUser", envelope);
                 SoapObject response = (SoapObject) envelope.getResponse();
-                Log.d("GetDefaultSettingsForUser:", response.toString());
+                Log.d("GetDefaultSettingsForUser:", String.valueOf(response.getProperty("lockData")));
                 byte[] decodedPhraseAsBytes = BaseEncoding.base64().decode(
                         String.valueOf(response.getProperty("lockData")));
+                Log.d("GetDefaultSettingsForUser:",new String(decodedPhraseAsBytes));
                 writeXML(decodedPhraseAsBytes);
             } catch (Exception e) {
                 e.printStackTrace();

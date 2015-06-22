@@ -34,8 +34,6 @@ public class SettingsFragment extends Fragment {
         resumeFiltering = (Button) view.findViewById(R.id.button_resume);
         //check if BlockService is running
 
-
-
         View.OnClickListener onClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -75,5 +73,6 @@ public class SettingsFragment extends Fragment {
 
         return view;
     }
+
 
 }
