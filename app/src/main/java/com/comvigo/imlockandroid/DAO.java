@@ -5,26 +5,29 @@ import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 
-import com.comvigo.imlockandroid.Factories.GsonFactory;
 import com.comvigo.imlockandroid.Models.SettingItem;
 import com.google.common.io.BaseEncoding;
-import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
 
 import org.ksoap2.SoapEnvelope;
 import org.ksoap2.serialization.SoapObject;
 import org.ksoap2.serialization.SoapPrimitive;
 import org.ksoap2.serialization.SoapSerializationEnvelope;
 import org.ksoap2.transport.HttpTransportSE;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 
 /**
@@ -68,18 +71,58 @@ public class DAO extends ActionBarActivity {
 
     public ArrayList getSettingsList(String userID) {
         try {
-            String settingsList = new GetSettingsList().execute(userID).get();
-            String eee = settingsList.replaceAll("=", ":");
-            String rrr = eee.replaceAll(":anyType",":");
+            String settings = new GetSettingsList().execute(userID).get();
+            String settingsUtf8 = settings.replace("utf-16", "utf-8");
+       //     String ee = ww.replace(" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"","");
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            Document doc = dBuilder.parse(new InputSource(new ByteArrayInputStream(settingsUtf8.getBytes("utf-8"))));
+            doc.getDocumentElement().normalize();
+            NodeList nList = doc.getElementsByTagName("SettingItem");
+            ArrayList<SettingItem> settingsList = new ArrayList<SettingItem>();
+            for (int temp = 0; temp < nList.getLength(); temp++) {
+                Node nNode = nList.item(temp);
+                if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+                    SettingItem settingItem = new SettingItem();
+                    Element eElement = (Element) nNode;
 
-            Log.d("aa", rrr);
-            JsonObject accRespon = GsonFactory.getGsonInstance().fromJson(rrr, JsonObject.class);
-            String personObject = accRespon.get("anyType").toString();
-            Type collectionType = new TypeToken<List<SettingItem>>() {
-            }.getType();
-            ArrayList<SettingItem> settings = GsonFactory.getGsonInstance().fromJson(personObject, collectionType);
-            Log.d("SETTTTTT", settings.toString());
-            return settings;
+                    settingItem.setSettingID(eElement.getElementsByTagName("SettingID").item(0).getTextContent());
+                    System.out.println("SettingID : "
+                            + eElement
+                            .getElementsByTagName("SettingID")
+                            .item(0)
+                            .getTextContent());
+
+                    settingItem.setSettingName(eElement.getElementsByTagName("SettingName").item(0).getTextContent());
+                    System.out.println("SettingName : "
+                            + eElement
+                            .getElementsByTagName("SettingName")
+                            .item(0)
+                            .getTextContent());
+
+                    settingItem.setUploadDate(eElement.getElementsByTagName("UploadDate").item(0).getTextContent());
+                    System.out.println("UploadDate : "
+                            + eElement
+                            .getElementsByTagName("UploadDate")
+                            .item(0)
+                            .getTextContent());
+
+                    settingItem.setIsDefault(eElement.getElementsByTagName("IsDefault").item(0).getTextContent());
+                    System.out.println("IsDefault : "
+                            + eElement
+                            .getElementsByTagName("IsDefault")
+                            .item(0)
+                            .getTextContent());
+                    settingItem.toString();
+                    settingsList.add(settingItem);
+                }
+
+            }
+
+
+
+            Log.d("settingsList", settingsList.toString());
+            return settingsList;
         } catch (Exception e) {
             e.printStackTrace();
             Log.d("FUCKKKK", "FUCKKKK");

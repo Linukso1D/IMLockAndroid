@@ -4,59 +4,48 @@ package com.comvigo.imlockandroid.Models;
  * Created by Dmitry on 15.06.2015.
  */
 public class SettingItem {
-    private String isDefault;
-    private String settingID;
-    private String settingName;
-    private String uploadDate;
-
-    public SettingItem(){}
-
-    public SettingItem(String isDefault, String settingID, String settingName, String uploadDate) {
-        this.isDefault = isDefault;
-        this.settingID = settingID;
-        this.settingName = settingName;
-        this.uploadDate = uploadDate;
-    }
-
-    public String getIsDefault() {
-        return isDefault;
-    }
-
-    public void setIsDefault(String isDefault) {
-        this.isDefault = isDefault;
-    }
+    private String SettingID;
+    private String SettingName;
+    private String UploadDate;
+    private String IsDefault;
 
     public String getSettingID() {
-        return settingID;
+        return SettingID;
     }
 
     public void setSettingID(String settingID) {
-        this.settingID = settingID;
+        SettingID = settingID;
     }
 
     public String getSettingName() {
-        return settingName;
+        return SettingName;
     }
 
-    public void setSettingName(String settingName) {
-        this.settingName = settingName;
-    }
+    public void setSettingName(String settingName) { SettingName = settingName; }
 
     public String getUploadDate() {
-        return uploadDate;
+        return UploadDate;
     }
 
     public void setUploadDate(String uploadDate) {
-        this.uploadDate = uploadDate;
+        UploadDate = uploadDate;
+    }
+
+    public String getIsDefault() {
+        return IsDefault;
+    }
+
+    public void setIsDefault(String isDefault) {
+        IsDefault = isDefault;
     }
 
     @Override
     public String toString() {
         return "SettingItem{" +
-                "isDefault='" + isDefault + '\'' +
-                ", settingID='" + settingID + '\'' +
-                ", settingName='" + settingName + '\'' +
-                ", uploadDate='" + uploadDate + '\'' +
+                "SettingID='" + SettingID + '\'' +
+                ", SettingName='" + SettingName + '\'' +
+                ", UploadDate='" + UploadDate + '\'' +
+                ", IsDefault='" + IsDefault + '\'' +
                 '}';
     }
 }
