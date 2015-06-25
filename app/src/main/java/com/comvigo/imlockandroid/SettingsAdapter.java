@@ -1,7 +1,6 @@
 package com.comvigo.imlockandroid;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -49,12 +48,8 @@ public class SettingsAdapter extends BaseAdapter {
         if (view == null) {
             view = lInflater.inflate(R.layout.settings_item_layout, parent, false);
         }
-
-  //      LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-   //     View view = inflater.inflate(R.layout.settings_item_layout, parent, false);
         TextView item = (TextView) view.findViewById(R.id.item);
         item.setText(itemList.get(position).getSettingName());
-        Log.d("rrr",itemList.get(position).getSettingName());
         return view;
     }
 

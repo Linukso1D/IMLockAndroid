@@ -22,6 +22,7 @@ import android.widget.Toast;
 
 import com.comvigo.imlockandroid.Receivers.InternetReceiver;
 import com.comvigo.imlockandroid.Receivers.ScreenReceiver;
+import com.comvigo.imlockandroid.SettingsDAO;
 
 import java.util.Arrays;
 import java.util.List;
@@ -40,14 +41,15 @@ public class BlockService extends Service {
     boolean screenOff;
     public static final String APP_PREFERENCES_WHITE = "WhiteList";
     public static final String APP_PREFERENCES_BLACK = "BlackList";
-    public static final String APP_PREFERENCES_SETTINGS = "Settings";
     boolean hasInternet = false;
-    SharedPreferences mSettingsBlack, mSettingsWhite, mSettings;
+    SharedPreferences mSettingsBlack, mSettingsWhite;
     List<String> browsers;
+    SettingsDAO settingsDAO;
 
     @Override
     public void onCreate() {
         super.onCreate();
+
         //create screen receiver
         browsers = Arrays.asList("com.android.chrome", "com.android.browser",
                 "org.mozilla.firefox", "mobi.mgeek.TunnyBrowser", "com.opera.browser:main");
@@ -55,17 +57,19 @@ public class BlockService extends Service {
         screenFilter.addAction(Intent.ACTION_SCREEN_OFF);
         mScreenReceiver = new ScreenReceiver();
         registerReceiver(mScreenReceiver, screenFilter);
+
         //create internet connection receiver
         IntentFilter internetFilter = new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE");
         mInternetReceiver = new InternetReceiver();
         registerReceiver(mInternetReceiver, internetFilter);
+
         //read shared preferences
         SharedPreferences whiteSharedPreferences = getSharedPreferences(APP_PREFERENCES_WHITE, getApplicationContext().MODE_PRIVATE);
         mSettingsWhite = getSharedPreferences(APP_PREFERENCES_WHITE, getApplicationContext().MODE_PRIVATE);
         SharedPreferences blackSharedPreferences = getSharedPreferences(APP_PREFERENCES_BLACK, getApplicationContext().MODE_PRIVATE);
         mSettingsBlack = getSharedPreferences(APP_PREFERENCES_BLACK, getApplicationContext().MODE_PRIVATE);
-        SharedPreferences mySharedPreferences = getSharedPreferences(APP_PREFERENCES_SETTINGS, getApplicationContext().MODE_PRIVATE);
-        mSettings = getSharedPreferences(APP_PREFERENCES_SETTINGS, getApplicationContext().MODE_PRIVATE);
+        settingsDAO = new SettingsDAO(getApplicationContext());
+
         //first check internet connection
         ConnectivityManager CManager =
                 (ConnectivityManager) getSystemService(getApplicationContext().CONNECTIVITY_SERVICE);
@@ -103,6 +107,7 @@ public class BlockService extends Service {
                             foregroundTaskPackageName = foregrountTaskInfo.topActivity.getPackageName();
                         }
                         if (browsers.contains(foregroundTaskPackageName)) {
+
                             //if user have opened default browser or chrome - we take url
                             if (foregroundTaskPackageName.equals(processInfos.get(i).processName) ||
                                     foregroundTaskPackageName.equals("com.opera.browser")) {
@@ -124,7 +129,7 @@ public class BlockService extends Service {
                                         String defaultBrowser = resolveInfo.activityInfo.packageName;
 
                                         //Set site for redirect
-                                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://comvigo.com"));
+                                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(settingsDAO.getRedirectURL()));
                                         Browser.deleteFromHistory(getContentResolver(), openedUrl);
 
                                         //open new tab on default browser
@@ -169,8 +174,8 @@ public class BlockService extends Service {
 
     private final Handler handler = new Handler() {
         public void handleMessage(Message msg) {
-            if (mSettings.getString("IsShowNotification","").equals("true"))
-                Toast.makeText(getApplicationContext(), mSettings.getString("NotificationMessage1",""), Toast.LENGTH_LONG).show();
+            if (settingsDAO.getIsShowNotification().equals("true"))
+                Toast.makeText(getApplicationContext(), settingsDAO.getNotificationMessage1(), Toast.LENGTH_LONG).show();
         }
     };
 
@@ -198,7 +203,6 @@ public class BlockService extends Service {
         url = mCur.getString(mCur.getColumnIndex(Browser.BookmarkColumns.URL));
         Log.d("URL", url);
         mCur.close();
-
         return url;
     }
 
@@ -226,7 +230,7 @@ public class BlockService extends Service {
                 return false;
             }
         }
-        if (mSettings.getString("blockAllOthers", "").equals("true")) {
+        if (settingsDAO.getBlockAllOthers().equals("true")) {
             return false;
         }
         return true;

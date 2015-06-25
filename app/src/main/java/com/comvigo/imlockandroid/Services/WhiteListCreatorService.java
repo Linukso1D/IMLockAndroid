@@ -5,13 +5,11 @@ import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.IBinder;
-import android.util.Log;
 
-import com.comvigo.imlockandroid.DAO;
-import com.comvigo.imlockandroid.Models.SettingItem;
+import com.comvigo.imlockandroid.Connection;
 import com.comvigo.imlockandroid.ParseXML;
+import com.comvigo.imlockandroid.SettingsDAO;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -25,9 +23,8 @@ public class WhiteListCreatorService extends Service {
 
     public static final String APP_PREFERENCES_WHITE = "WhiteList";
     public static final String APP_PREFERENCES_BLACK = "BlackList";
-    public static final String APP_PREFERENCES_SETTINGS = "Settings";
     public static final String APP_PREFERENCES_NAME = "";
-    SharedPreferences mSettingsBlack, mSettingsWhite, mSettings;
+    SharedPreferences mSettingsBlack, mSettingsWhite;
 
     @Override
     public void onCreate() {
@@ -35,57 +32,28 @@ public class WhiteListCreatorService extends Service {
     }
 
     public int onStartCommand(Intent intent, int flags, int startId) {
-        //Create user settings file
-        SharedPreferences mySharedPreferences = getSharedPreferences(APP_PREFERENCES_SETTINGS, getApplicationContext().MODE_PRIVATE);
-        mSettings = getSharedPreferences(APP_PREFERENCES_SETTINGS, getApplicationContext().MODE_PRIVATE);
-      //  SharedPreferences.Editor editor = mSettings.edit();
-//        editor.clear();
-////        editor.putString("settingsID", "6333");
-//
-//        editor.apply();
-        Log.d("COMPID", mSettings.getString("comuterID", ""));
-        Log.d("SETID", mSettings.getString("settingsID", ""));
 
-//        new DAO().getSettings(mSettings.getString("userID", ""), mSettings.getString("settingsID", ""));
-//        new DAO().makeforThisComputer(mSettings.getString("comuterID", ""));
-
-        DAO dao = new DAO();
-//        dao.getDefaultSettingsForUser(mSettings.getString("userID", ""), mSettings.getString("comuterID", ""));
-        dao.getSettings(mSettings.getString("userID", ""), mSettings.getString("settingsID", ""));
-        dao.makeforThisComputer(mSettings.getString("userID", ""), mSettings.getString("comuterID", ""));
-        ArrayList<SettingItem> settings = dao.getSettingsList(mSettings.getString("userID", ""));
-
-
-
+        final SettingsDAO settingsDAO = new SettingsDAO(getApplicationContext());
+        Connection connection = new Connection();
+        connection.getSettings(settingsDAO.getUserID(),settingsDAO.getSettingsID());
+        connection.makeforThisComputer(settingsDAO.getUserID(),settingsDAO.getComuterID());
         timer = new Timer();
         final TimerTask timerTask = new TimerTask() {
             boolean isRunning = false;
 
-
             @Override
             public void run() {
 
-                Log.d("WhiteListCreatorService","timerTask");
-
                 //Get black and white lists
-
                 ParseXML parseXML = new ParseXML();
                 List<String> block = parseXML.getBlockList();
                 List<String> white = parseXML.getWhiteList();
-
-                //getSettings
-                SharedPreferences mySharedPreferences = getSharedPreferences(APP_PREFERENCES_SETTINGS, getApplicationContext().MODE_PRIVATE);
-                mSettings = getSharedPreferences(APP_PREFERENCES_SETTINGS, getApplicationContext().MODE_PRIVATE);
-                SharedPreferences.Editor editor = mSettings.edit();
                 try {
                     List<String> other = parseXML.stringList();
-                    editor.clear();
-                    editor.commit();
-                    editor.putString("blockAllOthers", other.get(0));
-                    editor.putString("RedirectURL", other.get(1));
-                    editor.putString("IsShowNotification", other.get(2));
-                    editor.putString("NotificationMessage1", other.get(3));
-                    editor.apply();
+                    settingsDAO.setBlockAllOthers(other.get(0));
+                    settingsDAO.setRedirectURL(other.get(1));
+                    settingsDAO.setIsShowNotification(other.get(2));
+                    settingsDAO.setNotificationMessage1(other.get(3));
                 }catch (Exception e){
                     e.printStackTrace();
                 }

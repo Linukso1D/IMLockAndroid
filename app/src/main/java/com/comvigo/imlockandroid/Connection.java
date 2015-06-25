@@ -33,12 +33,11 @@ import javax.xml.parsers.DocumentBuilderFactory;
 /**
  * Created by Dmitry on 19.05.2015.
  */
-public class DAO extends ActionBarActivity {
+public class Connection extends ActionBarActivity {
 
     private final String NAMESPACE = "http://tempuri.org/";
     private final String LOGIN = "http://imlockusers.blockinternet.net/Service1.svc?wsdl";
     private final String SETTINGS = "http://webservice.blockinternet.net/Service1.svc?wsdl";
-//    final int PROGRESS_DLG_ID = 666;
 
     public String validateUser(String login, String pass) {
         String str = "";
@@ -73,7 +72,6 @@ public class DAO extends ActionBarActivity {
         try {
             String settings = new GetSettingsList().execute(userID).get();
             String settingsUtf8 = settings.replace("utf-16", "utf-8");
-       //     String ee = ww.replace(" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"","");
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document doc = dBuilder.parse(new InputSource(new ByteArrayInputStream(settingsUtf8.getBytes("utf-8"))));
@@ -85,47 +83,17 @@ public class DAO extends ActionBarActivity {
                 if (nNode.getNodeType() == Node.ELEMENT_NODE) {
                     SettingItem settingItem = new SettingItem();
                     Element eElement = (Element) nNode;
-
                     settingItem.setSettingID(eElement.getElementsByTagName("SettingID").item(0).getTextContent());
-                    System.out.println("SettingID : "
-                            + eElement
-                            .getElementsByTagName("SettingID")
-                            .item(0)
-                            .getTextContent());
-
                     settingItem.setSettingName(eElement.getElementsByTagName("SettingName").item(0).getTextContent());
-                    System.out.println("SettingName : "
-                            + eElement
-                            .getElementsByTagName("SettingName")
-                            .item(0)
-                            .getTextContent());
-
                     settingItem.setUploadDate(eElement.getElementsByTagName("UploadDate").item(0).getTextContent());
-                    System.out.println("UploadDate : "
-                            + eElement
-                            .getElementsByTagName("UploadDate")
-                            .item(0)
-                            .getTextContent());
-
                     settingItem.setIsDefault(eElement.getElementsByTagName("IsDefault").item(0).getTextContent());
-                    System.out.println("IsDefault : "
-                            + eElement
-                            .getElementsByTagName("IsDefault")
-                            .item(0)
-                            .getTextContent());
                     settingItem.toString();
                     settingsList.add(settingItem);
                 }
-
             }
-
-
-
-            Log.d("settingsList", settingsList.toString());
             return settingsList;
         } catch (Exception e) {
             e.printStackTrace();
-            Log.d("FUCKKKK", "FUCKKKK");
             return  null;
         }
     }
@@ -146,19 +114,6 @@ public class DAO extends ActionBarActivity {
         }
     }
 
-//    @Override
-//    protected Dialog onCreateDialog(int dialogId) {
-//        ProgressDialog progress = null;
-//        switch (dialogId) {
-//            case PROGRESS_DLG_ID:
-//                progress = new ProgressDialog(getApplicationContext());
-//                progress.setMessage("Loading...");
-//
-//                break;
-//        }
-//        return progress;
-//    }
-
     /**
      * ValidateUser
      */
@@ -166,7 +121,6 @@ public class DAO extends ActionBarActivity {
 
         @Override
         protected String doInBackground(String... params) {
-//            publishProgress(new String[]{});
             String serverResult = "0";
             SoapObject request = new SoapObject(NAMESPACE, "ValidateUser");
             request.addProperty("userName", params[0]);
@@ -189,13 +143,11 @@ public class DAO extends ActionBarActivity {
         @Override
         protected void onProgressUpdate(String... values) {
             super.onProgressUpdate(values);
-//            showDialog(PROGRESS_DLG_ID);
         }
 
         @Override
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
-//            removeDialog(PROGRESS_DLG_ID);
         }
     }
 
@@ -329,10 +281,8 @@ public class DAO extends ActionBarActivity {
             try {
                 transportSE.call("http://tempuri.org/IService1/GetDefaultSettingsForUser", envelope);
                 SoapObject response = (SoapObject) envelope.getResponse();
-                Log.d("GetDefaultSettingsForUser:", String.valueOf(response.getProperty("lockData")));
                 byte[] decodedPhraseAsBytes = BaseEncoding.base64().decode(
                         String.valueOf(response.getProperty("lockData")));
-                Log.d("GetDefaultSettingsForUser:",new String(decodedPhraseAsBytes));
                 writeXML(decodedPhraseAsBytes);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -349,9 +299,6 @@ public class DAO extends ActionBarActivity {
                     new ByteArrayInputStream(decodedPhraseAsBytes));
             ZipEntry ze = zis.getNextEntry();
             while (ze != null) {
-          //      String root = Environment.getExternalStorageDirectory().toString();
-          //      File myDir = new File(root + "/IMLock");
-          //      myDir.mkdirs();
                 File newFile = new File (Environment.getExternalStorageDirectory() + "/IMLock/IMLockData.txt");
                 new File(newFile.getParent()).mkdirs();
                 FileOutputStream fos = new FileOutputStream(newFile);

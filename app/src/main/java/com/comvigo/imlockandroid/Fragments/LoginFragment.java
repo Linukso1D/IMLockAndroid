@@ -2,10 +2,7 @@ package com.comvigo.imlockandroid.Fragments;
 
 import android.app.Fragment;
 import android.app.FragmentTransaction;
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.telephony.TelephonyManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,8 +11,9 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.comvigo.imlockandroid.DAO;
+import com.comvigo.imlockandroid.Connection;
 import com.comvigo.imlockandroid.R;
+import com.comvigo.imlockandroid.SettingsDAO;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -28,20 +26,13 @@ public class LoginFragment extends Fragment {
     String login_value, password_value;
     View view;
 
-    public static final String APP_PREFERENCES_SETTINGS = "Settings";
-    public static final String APP_PREFERENCES_NAME = "";
-    SharedPreferences mSettings;
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.fragment_login, container, false);
         login = (EditText) view.findViewById(R.id.login);
         password = (EditText) view.findViewById(R.id.password);
@@ -50,8 +41,8 @@ public class LoginFragment extends Fragment {
             public void onClick(View v) {
                 login_value = String.valueOf(login.getText());
                 password_value = String.valueOf(password.getText());
-                DAO dao = new DAO();
-                String result = dao.validateUser(login_value,password_value);
+                Connection connection = new Connection();
+                String result = connection.validateUser(login_value,password_value);
                 switch (result) {
                     case "-1":
                         Toast.makeText(getActivity().getApplication(), "Wrong login or password", Toast.LENGTH_LONG).show();
@@ -60,31 +51,15 @@ public class LoginFragment extends Fragment {
                         Toast.makeText(getActivity().getApplication(), "Server connection error", Toast.LENGTH_LONG).show();
                         break;
                     case "1":
-                        SharedPreferences mySharedPreferences = getActivity().getSharedPreferences(APP_PREFERENCES_SETTINGS, getActivity().MODE_PRIVATE);
-                        mSettings = getActivity().getSharedPreferences(APP_PREFERENCES_SETTINGS, getActivity().MODE_PRIVATE);
-                        SharedPreferences.Editor editor = mSettings.edit();
-
-                        TelephonyManager telephonyManager = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
-                        //     String imei = telephonyManager.getDeviceId();
                         String model = android.os.Build.MODEL;
+                        SettingsDAO settingsDAO= new SettingsDAO(getActivity());
                         Calendar c = Calendar.getInstance();
                         SimpleDateFormat df = new SimpleDateFormat("ddMMyyyy");
                         String formattedDate = df.format(c.getTime());
-                        String comuterID = formattedDate + model.replaceAll(" ", "") ;//+ imei;
-                        String userID = dao.getUser(login_value, comuterID);
-
-//                        Intent intent = new Intent(getActivity().getBaseContext(), WhiteListCreatorService.class);
-                        editor.putString("userID", userID);
-                        editor.putString("comuterID", comuterID);
-                        editor.commit();
-
-                        //To delete app icon
-//                        PackageManager p = getPackageManager();
-//                        ComponentName componentName = new ComponentName(getApplication(),
-//                                com.comvigo.imlockandroid.MainActivity.class);
-//                        p.setComponentEnabledSetting(componentName,
-//                                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
-
+                        String comuterID = formattedDate + model.replaceAll(" ", "");
+                        String userID = connection.getUser(login_value, comuterID);
+                        settingsDAO.setUserID(userID);
+                        settingsDAO.setComuterID(comuterID);
                         FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
                         fragmentTransaction.replace(R.id.activity_container, new SettingsChooserFragment());
                         fragmentTransaction.commit();
@@ -102,8 +77,5 @@ public class LoginFragment extends Fragment {
         });
         return view;
     }
-
-
-
 
 }
